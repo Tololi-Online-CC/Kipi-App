@@ -7,12 +7,14 @@ import { Text, View } from '../components/Themed';
 export default function ModalScreen() {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Modal</Text>
+      <Text style={styles.title}>Disclaimer</Text>
+      <Text>{"\n"}</Text>
+      <Text style={{textAlign: "center"}}>All information used in this application are used from company data and is strictly reserved.</Text>
       <View style={styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
-      <EditScreenInfo path="app/modal.tsx" />
+      {/* <EditScreenInfo path="app/modal.tsx" /> */}
 
       {/* Use a light status bar on iOS to account for the black space above the modal */}
-      <StatusBar style={Platform.OS === 'ios' ? 'light' : 'auto'} />
+      {/* <StatusBar style={Platform.OS === 'ios' ? 'light' : 'auto'} /> */}
     </View>
   );
 }
