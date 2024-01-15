@@ -97,7 +97,7 @@ export default function App() {
           style={styles.backgroundImage}
         />
         <View style={styles.overlay} />
-        <Text style={styles.overlayText}>Marigold Hotel</Text>
+        <Text style={styles.overlayText}>Didact Digital</Text>
       </View>
 
       <Text style={styles.title}>Welcome Back!</Text>
@@ -224,7 +224,6 @@ const styles = StyleSheet.create({
     fontSize: 24,
     marginTop: 10,
     marginBottom: 20,
-    fontFamily: 'SpaceMono-Regular',
   },
   highlightContainer: {
     flex: 1,
@@ -250,6 +249,5 @@ const styles = StyleSheet.create({
     color: 'black',
     textAlign: 'center',
     padding: 10,
-    textDecoration: 'underline',
   },
 });

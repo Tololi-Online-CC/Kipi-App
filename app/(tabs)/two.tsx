@@ -1,18 +1,100 @@
-import {
-  Text,
-  ScrollView,
-  Dimensions,
-  View,
-  TouchableOpacity,
-  StyleSheet,
-} from 'react-native';
-import { LineChart, PieChart } from 'react-native-chart-kit';
-import { Table, Rows } from 'react-native-table-component';
+import React, { useState, useEffect } from 'react';
+import { View, Text, Dimensions, ScrollView, ActivityIndicator, Button, Alert, TouchableOpacity, StyleSheet } from 'react-native';
+import { LineChart, BarChart } from 'react-native-chart-kit';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import NetInfo from '@react-native-community/netinfo';
+import axios from 'axios';
+
+interface SheetData {
+  range: string;
+  majorDimension: string;
+  values: Array<Array<string>>;
+}
 
 const screenWidth = Dimensions.get('window').width;
 const tableWidth = screenWidth * 0.95;
 
-export default function Dashboard() {
+export default function App() {
+  const [incomeData, setIncomeData] = useState<SheetData | null>(null);
+  const [expensesData, setExpensesData] = useState<SheetData | null>(null);
+  const [productPerformanceData, setProductPerformanceData] = useState<SheetData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [loadingCount, setLoadingCount] = useState(0); // New state variable
+
+
+  const fetchData = async (sheetName: string, setDataFunction: React.Dispatch<React.SetStateAction<SheetData | null>>) => {
+    try {
+      const response = await axios.get<SheetData>(
+        `https://sheets.googleapis.com/v4/spreadsheets/1dd3iyQR_3cMW9gFpyoyKbwLpwyBdzajQdA6qN31TjBI/values/${sheetName}?valueRenderOption=FORMATTED_VALUE&key=AIzaSyBi1vBNxajCCA26JnTVZBv80rZ12bufTkA`
+      );
+
+      response.data.values = response.data.values.slice(1);
+
+      setDataFunction(response.data);
+      await AsyncStorage.setItem(`${sheetName}Data`, JSON.stringify(response.data));
+    } catch (error) {
+      console.error(`Error fetching ${sheetName} data:`, error);
+    } finally {
+      setLoadingCount((prevCount) => prevCount + 1);
+    }
+  };
+
+  const loadData = async (sheetName: string, setDataFunction: React.Dispatch<React.SetStateAction<SheetData | null>>) => {
+    try {
+      const storedData = await AsyncStorage.getItem(`${sheetName}Data`);
+      if (storedData) {
+        setDataFunction(JSON.parse(storedData));
+      }
+    } catch (error) {
+      console.error(`Error loading ${sheetName} data from AsyncStorage:`, error);
+    } finally {
+      setLoadingCount((prevCount) => prevCount + 1);
+    }
+  };
+
+  const checkInternetConnectivity = async () => {
+    const netInfo = await NetInfo.fetch();
+    return netInfo.isConnected;
+  };
+
+  useEffect(() => {
+    setLoadingCount(0);
+    loadData('income', setIncomeData);
+    loadData('expenses', setExpensesData);
+    loadData('productPerformance', setProductPerformanceData);
+
+    const networkListener = NetInfo.addEventListener((state) => {
+      if (state.isConnected) {
+        fetchData('income', setIncomeData);
+        fetchData('expenses', setExpensesData);
+        fetchData('productPerformance', setProductPerformanceData);
+      }
+    });
+
+    return () => networkListener();
+  }, []);
+
+  useEffect(() => {
+    if (loadingCount === 3) {
+      setLoading(false); // Hide loader when all data sets are loaded
+    }
+  }, [loadingCount]);
+
+  const handleRefresh = async () => {
+    const isConnected = await checkInternetConnectivity();
+    if (isConnected) {
+      setLoading(true);
+      setLoadingCount(0);
+      fetchData('income', setIncomeData);
+      fetchData('expenses', setExpensesData);
+      fetchData('productPerformance', setProductPerformanceData);
+    } else {
+      Alert.alert('No internet connection. Please connect to the internet to refresh data.');
+    }
+  };
+
+
+  //  Configuration for the charts
   const chartConfig = {
     backgroundGradientFrom: '#ffffff',
     backgroundGradientFromOpacity: 0,
@@ -25,206 +107,95 @@ export default function Dashboard() {
     decimalPlaces: 0,
   };
 
-  const staffBarChartData = {
-    labels: [
-      'GM',
-      'F&B Manager',
-      'Front Office',
-      'Housekeeping',
-      'Laundry',
-      'Cleaner',
-      'Western Kitch.',
-      'Chinese Kitch.',
-      'Waiters',
-      'Bartenders',
-    ],
-    datasets: [
-      {
-        data: [1, 1, 2, 3, 1, 1, 3, 9, 6, 4],
-      },
-    ],
+
+  const renderLineChart = (data: SheetData | null, title: string) => {
+    return (
+      <>
+        <Text style={styles.titleSmall}>{title}</Text>
+        <View style={{ justifyContent: 'center' }}>
+          <LineChart
+            data={{
+              labels: data?.values.map((row) => row[0]) || [],
+              datasets: [{ data: data?.values.map((row) => parseFloat(row[1])) || [] }],
+            }}
+            width={screenWidth}
+            height={220}
+            yAxisLabel={'N$'}
+            chartConfig={chartConfig}
+            bezier
+          />
+        </View>
+      </>
+    );
   };
 
-  const photoshootData = [
-    {
-      name: 'Pre-wedding',
-      population: 1,
-      color: '#3498db',
-      legendFontColor: '#7F7F7F',
-      legendFontSize: 14,
-    },
-    {
-      name: 'Matric Farewell',
-      population: 4,
-      color: '#2ecc71',
-      legendFontColor: '#7F7F7F',
-      legendFontSize: 14,
-    },
-    {
-      name: 'Private Shoot',
-      population: 1,
-      color: '#e74c3c',
-      legendFontColor: '#7F7F7F',
-      legendFontSize: 14,
-    },
-  ];
-
-  // Line Chart Data
-  const lineChartData = {
-    labels: ['Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec'],
-    datasets: [
-      {
-        data: [800000, 450000, 1200000, 2100000, 2400000, 2900000],
-      },
-    ],
+  const renderBarChart = (data: SheetData | null, title: string) => {
+    return (
+      <>
+        <Text style={styles.titleSmall}>{title}</Text>
+        <View style={{ justifyContent: 'center' }}>
+          <BarChart
+            data={{
+              labels: data?.values.map((row) => row[0]) || [],
+              datasets: [{ data: data?.values.map((row) => parseFloat(row[1])) || [] }],
+            }}
+            width={screenWidth}
+            height={220}
+            yAxisLabel="$"
+            yAxisSuffix=""
+            chartConfig={chartConfig}
+          />
+        </View>
+      </>
+    );
   };
 
-  const expenseData = {
-    labels: ['Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec'],
-    datasets: [
-      {
-        data: [450000, 170000, 660000, 720000, 850000, 790000],
-      },
-    ],
-  };
 
-  // Table Data for Task Progress
-  const tableData = [
-    ['Department', 'Completed Tasks (%)', 'Pending (%)', 'In Progress (%)'],
-    ['Inspections', 75, 0, 25],
-    ['IT', 100, 0, 0],
-    ['GM', 54.55, 45.45, 0],
-    ['Housekeep.', 100, 0, 0],
-    ['Kitchen & Dining', 100, 0, 0],
-    ['Front Office', 100, 0, 0],
-    ['F & B', 50, 50, 0],
-    ['Stock Control', 100, 0, 0],
-    ['Maintenance', 80, 20, 0],
-    ['Meili', 100, 0, 0],
-    ['Store room', 100, 0, 0],
-  ];
 
-  const shadesOfBlue = [
-    '#a2af65',
-    '#c71e1e',
-    '#5DADE2',
-    '#c1c1c1',
-    '#9a0000',
-    '#0f0707',
-    '#008080',
-    '#FF6F61',
-    '#21618C',
-    '#FFA07A',
-  ];
-
-  const data = staffBarChartData.labels.map((label, index) => ({
-    name: label,
-    population: staffBarChartData.datasets[0].data[index],
-    color: shadesOfBlue[index % shadesOfBlue.length],
-    legendFontColor: '#7F7F7F',
-    legendFontSize: 15,
-  }));
-
-  const roomData = {
-    labels: ['1 Dec', '8 Dec', '15 Dec', '22 Dec', '29 Dec'],
-    datasets: [
-      {
-        data: [14, 34, 27, 43, 43],
-      },
-    ],
-  };
 
   return (
     <>
-      <ScrollView
-        horizontal
-        contentContainerStyle={styles.buttonContainer}
-        showsHorizontalScrollIndicator={false}>
-        <TouchableOpacity style={styles.button}>
-          <Text style={styles.buttonText}>This Month</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.button}>
-          <Text style={styles.buttonText}>Last Month</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.button}>
-          <Text style={styles.buttonText}>Last 3 Months</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.button}>
-          <Text style={styles.buttonText}>All Time</Text>
-        </TouchableOpacity>
-      </ScrollView>
-      <ScrollView style={styles.container}>
-        <Text style={styles.titleSmall}>Income</Text>
-        <View style={{ justifyContent: 'center' }}>
-          <LineChart
-            data={lineChartData}
-            width={screenWidth}
-            height={220}
-            yAxisLabel={'N$'}
-            chartConfig={chartConfig}
-          />
+      {loading ? (
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <ActivityIndicator size="large" color="#000000" />
+          <Text>Loading...</Text>
         </View>
+      ) : (
+        <>
+          <ScrollView
+            horizontal
+            contentContainerStyle={styles.buttonContainer}
+            showsHorizontalScrollIndicator={false}>
+            <TouchableOpacity style={styles.button}>
+              <Text style={styles.buttonText}>Finances</Text>
+            </TouchableOpacity>
 
-        <Text style={styles.titleSmall}>Expenses</Text>
-        <View style={{ justifyContent: 'center' }}>
-          <LineChart
-            data={expenseData}
-            width={screenWidth}
-            height={220}
-            yAxisLabel={'N$'}
-            chartConfig={chartConfig}
-          />
-        </View>
+            <TouchableOpacity style={styles.button}>
+              <Text style={styles.buttonText}>Marketing</Text>
+            </TouchableOpacity>
 
-        <Text style={styles.titleSmall}>Task Progress</Text>
-        <View style={styles.tableContainer}>
-          <Table borderStyle={{ borderWidth: 1, borderColor: '#C1C0B9' }}>
-            <Rows data={tableData} textStyle={styles.text} />
-          </Table>
-        </View>
+            <TouchableOpacity style={styles.button}>
+              <Text style={styles.buttonText}>Operations</Text>
+            </TouchableOpacity>
 
-        <Text>{'\n'}</Text>
-        <Text style={styles.titleSmall}>Staff Distribution</Text>
-        <View style={{ justifyContent: 'center' }}>
-          <PieChart
-            data={data}
-            width={screenWidth * 0.9}
-            height={200}
-            chartConfig={chartConfig}
-            accessor="population"
-            backgroundColor="transparent"
-            paddingLeft=""
-            center={[5, 10]}
-            absolute
-          />
-        </View>
+            <TouchableOpacity style={styles.button}>
+              <Text style={styles.buttonText}>Human Resources</Text>
+            </TouchableOpacity>
 
-        <Text>{'\n'}</Text>
-        <Text style={styles.titleSmall}>Occupied Rooms</Text>
-        <View style={{ justifyContent: 'center' }}>
-          <LineChart
-            data={roomData}
-            width={screenWidth}
-            height={220}
-            chartConfig={chartConfig}
-          />
-        </View>
+          </ScrollView>
+          <ScrollView style={styles.container}>
 
-        <Text style={styles.titleSmall}>Event Distribution</Text>
-        <View style={{ justifyContent: 'center' }}>
-          <PieChart
-            data={photoshootData}
-            width={screenWidth * 0.9}
-            height={200}
-            chartConfig={chartConfig}
-            accessor={'population'}
-            backgroundColor="transparent"
-            paddingLeft=""
-            center={[5, 0]}
-            absolute
-          />
-        </View>
-      </ScrollView>
+            {renderLineChart(incomeData, 'Income')}
+            {renderLineChart(expensesData, 'Expenses')}
+            {renderBarChart(productPerformanceData, 'Product Performance')}
+
+            <Text>{'\n'}</Text>
+            <Button title='Refresh' onPress={handleRefresh}></Button>
+            <Text>{'\n'}</Text>
+            
+          </ScrollView>
+        </>
+      )}
     </>
   );
 }
@@ -246,17 +217,31 @@ const styles = StyleSheet.create({
     backgroundColor: '#000', // Use your desired button color
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: "black",
+    borderColor: 'black',
   },
   buttonText: {
     color: 'white',
     fontSize: 14,
   },
+  headerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginHorizontal: 0,
+    marginVertical: 16,
+    borderBottomWidth: 1,
+    borderRadius: 5,
+    paddingHorizontal: 10,
+    // paddingVertical: 20,
+  },
   titleSmall: {
     fontSize: 24,
-    marginTop: 10,
+    marginTop: 15,
     marginBottom: 20,
-    fontFamily: 'SpaceMono-Regular',
+  },
+  filterTitle: {
+    fontSize: 16,
+    color: 'grey',
   },
   tableContainer: {
     width: tableWidth,
