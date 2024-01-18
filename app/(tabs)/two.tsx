@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, Dimensions, ScrollView, ActivityIndicator, Button, Alert, TouchableOpacity, StyleSheet } from 'react-native';
-import { LineChart, BarChart } from 'react-native-chart-kit';
+import { LineChart, BarChart, PieChart } from 'react-native-chart-kit';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
 import axios from 'axios';
+import { Table, Rows } from 'react-native-table-component';
 
 interface SheetData {
   range: string;
@@ -18,8 +19,13 @@ export default function App() {
   const [incomeData, setIncomeData] = useState<SheetData | null>(null);
   const [expensesData, setExpensesData] = useState<SheetData | null>(null);
   const [productPerformanceData, setProductPerformanceData] = useState<SheetData | null>(null);
+  const [taskProgressData, setTaskProgressData] = useState<SheetData | null>(null);
+  const [staffDistributionData, setStaffDistributionData] = useState<SheetData | null>(null);
+
+
   const [loading, setLoading] = useState(true);
-  const [loadingCount, setLoadingCount] = useState(0); // New state variable
+  const [loadingCount, setLoadingCount] = useState(0);
+  const [selectedComponent, setSelectedComponent] = useState("finance");
 
 
   const fetchData = async (sheetName: string, setDataFunction: React.Dispatch<React.SetStateAction<SheetData | null>>) => {
@@ -62,12 +68,17 @@ export default function App() {
     loadData('income', setIncomeData);
     loadData('expenses', setExpensesData);
     loadData('productPerformance', setProductPerformanceData);
+    loadData('taskProgress', setTaskProgressData);
+    loadData('staffDistribution', setStaffDistributionData);
+
 
     const networkListener = NetInfo.addEventListener((state) => {
       if (state.isConnected) {
         fetchData('income', setIncomeData);
         fetchData('expenses', setExpensesData);
         fetchData('productPerformance', setProductPerformanceData);
+        fetchData('taskProgress', setTaskProgressData);
+        fetchData('staffDistribution', setStaffDistributionData);
       }
     });
 
@@ -75,7 +86,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (loadingCount === 3) {
+    if (loadingCount === 5) {
       setLoading(false); // Hide loader when all data sets are loaded
     }
   }, [loadingCount]);
@@ -88,9 +99,15 @@ export default function App() {
       fetchData('income', setIncomeData);
       fetchData('expenses', setExpensesData);
       fetchData('productPerformance', setProductPerformanceData);
+      fetchData('taskProgress', setTaskProgressData);
+      fetchData('staffDistribution', setStaffDistributionData);
     } else {
       Alert.alert('No internet connection. Please connect to the internet to refresh data.');
     }
+  };
+
+  const handleSelection = (component: string) => {
+    setSelectedComponent(component);
   };
 
 
@@ -150,6 +167,65 @@ export default function App() {
     );
   };
 
+  const renderTable = (data: SheetData | null, title: string) => {
+    const tableData = data?.values || [];
+
+    return (
+      <View>
+        <Text style={styles.titleSmall}>{title}</Text>
+        <View style={styles.tableContainer}>
+          <Table borderStyle={{ borderWidth: 1, borderColor: '#C1C0B9' }}>
+            <Rows data={tableData} textStyle={{
+              marginVertical: 5,
+              marginHorizontal: 5,
+              padding: 0,
+              fontSize: 11,
+            }} />
+          </Table>
+        </View>
+      </View>
+    );
+  };
+
+  const renderPieChart = (data: SheetData | null, title: string) => {
+    const modernColors = [
+      '#3498db', // Blue
+      '#e74c3c', // Red
+      '#2ecc71', // Green
+      '#f39c12', // Yellow
+      '#9b59b6', // Purple
+      '#1abc9c', // Teal
+      '#d35400', // Orange
+      '#34495e', // Dark Gray
+      '#95a5a6', // Light Gray
+    ];
+
+    const pieChartData = data?.values.map((row, index) => ({
+      name: row[0],
+      population: parseInt(row[1], 10),
+      color: modernColors[index % modernColors.length], // Use modulo to repeat colors if needed
+      legendFontColor: '#7F7F7F',
+      legendFontSize: 14,
+    })) || [];
+
+    return (
+      <View style={{ justifyContent: 'center' }}>
+        <Text style={styles.titleSmall}>{title}</Text>
+        <PieChart
+          data={pieChartData}
+          width={screenWidth * 0.9}
+          height={190}
+          chartConfig={chartConfig}
+          accessor={'population'}
+          backgroundColor={'transparent'}
+          paddingLeft=''
+          center={[5, 10]}
+        />
+
+      </View>
+    );
+  };
+
 
 
 
@@ -166,33 +242,64 @@ export default function App() {
             horizontal
             contentContainerStyle={styles.buttonContainer}
             showsHorizontalScrollIndicator={false}>
-            <TouchableOpacity style={styles.button}>
+            <TouchableOpacity style={styles.button} onPress={() => handleSelection('finance')}>
               <Text style={styles.buttonText}>Finances</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.button}>
-              <Text style={styles.buttonText}>Marketing</Text>
+              <Text style={styles.buttonText} onPress={() => handleSelection('marketing')}>Marketing</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.button}>
-              <Text style={styles.buttonText}>Operations</Text>
+              <Text style={styles.buttonText} onPress={() => handleSelection('operations')}>Operations</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.button}>
-              <Text style={styles.buttonText}>Human Resources</Text>
+              <Text style={styles.buttonText} onPress={() => handleSelection('hr')}>Human Resources</Text>
             </TouchableOpacity>
 
           </ScrollView>
           <ScrollView style={styles.container}>
 
-            {renderLineChart(incomeData, 'Income')}
-            {renderLineChart(expensesData, 'Expenses')}
-            {renderBarChart(productPerformanceData, 'Product Performance')}
+            {
+              selectedComponent === "finance" ? (
+                <>
+                  {renderLineChart(incomeData, 'Income')}
+                  {renderLineChart(expensesData, 'Expenses')}
+                  {renderBarChart(productPerformanceData, 'Product Performance')}
+                </>
+
+              ) : selectedComponent === "marketing" ? (
+                <>
+                  {renderLineChart(incomeData, 'Campaign Performance')}
+                  {renderBarChart(productPerformanceData, 'Email Marketing KPIs')}
+                  {renderLineChart(expensesData, 'Marketing Budget')}
+                </>
+              ) : selectedComponent === "operations" ? (
+                <>
+                  {renderLineChart(incomeData, 'Operation Performance')}
+                  {renderLineChart(expensesData, 'Operation Tasks')}
+                  {renderBarChart(productPerformanceData, 'Operation Budget')}
+                </>
+              ) : selectedComponent === "hr" ? (
+                <>
+                  {renderTable(taskProgressData, 'Task Progress')}
+                  {renderPieChart(staffDistributionData, 'Staff Distribution')}
+                  {renderBarChart(productPerformanceData, 'Product Performance')}
+                </>
+              ) : (
+                <>
+                  {renderLineChart(incomeData, 'Income')}
+                  {renderLineChart(expensesData, 'Expenses')}
+                  {renderBarChart(productPerformanceData, 'Product Performance')}
+                </>
+              )
+            }
 
             <Text>{'\n'}</Text>
             <Button title='Refresh' onPress={handleRefresh}></Button>
             <Text>{'\n'}</Text>
-            
+
           </ScrollView>
         </>
       )}
@@ -249,11 +356,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: 5,
     // backgroundColor: '#fff',
     alignSelf: 'center',
-  },
-  text: {
-    marginVertical: 5,
-    marginHorizontal: 5,
-    padding: 0,
-    fontSize: 11,
   },
 });
