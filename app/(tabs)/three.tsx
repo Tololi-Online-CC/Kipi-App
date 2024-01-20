@@ -9,8 +9,8 @@ const UserProfile = () => {
           source={require('./../../assets/images/marigold-logo.png')}
           style={styles.profileImage}
         />
-        <Text style={styles.userName}>General Manager</Text>
-        <Text style={styles.userEmail}>gm@marigold-hotels.com</Text>
+        <Text style={styles.userName}>Operations Manager</Text>
+        <Text style={styles.userEmail}>info@didactdigital.com</Text>
       </View>
 
       <View style={styles.cardContainer}>

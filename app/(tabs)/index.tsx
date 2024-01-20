@@ -219,11 +219,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     marginVertical: 20,
+    fontWeight: 'bold'
   },
   titleSmall: {
     fontSize: 24,
-    marginTop: 10,
+    marginTop: 25,
     marginBottom: 20,
+    fontWeight: 'bold',
   },
   highlightContainer: {
     flex: 1,

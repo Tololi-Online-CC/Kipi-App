@@ -1,10 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import 'react-native-gesture-handler';
 import { View, Text, Dimensions, ScrollView, ActivityIndicator, Button, Alert, TouchableOpacity, StyleSheet } from 'react-native';
 import { LineChart, BarChart, PieChart } from 'react-native-chart-kit';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
 import axios from 'axios';
 import { Table, Rows } from 'react-native-table-component';
+import BottomSheet, { BottomSheetBackdrop } from '@gorhom/bottom-sheet';
+import DropDownPicker from 'react-native-dropdown-picker';
 
 interface SheetData {
   range: string;
@@ -26,6 +29,33 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [loadingCount, setLoadingCount] = useState(0);
   const [selectedComponent, setSelectedComponent] = useState("finance");
+
+  // Bottom Sheet
+
+  // ref
+  const bottomSheetRef = useRef<BottomSheet>(null);
+
+  // variables
+  const snapPoints = useMemo(() => ['25%', '55%',], []);
+
+  // callbacks
+  const handleSheetChanges = useCallback((index: number) => {
+    console.log('handleSheetChanges', index);
+  }, []);
+
+  const handleOpenPress = () => { bottomSheetRef.current?.expand() };
+  const renderBackDrop = useCallback(
+    (props: any) => <BottomSheetBackdrop {...props} appearsOnIndex={0} disappearsOnIndex={-1} />, []
+  );
+
+  // DropDown 
+  const [open, setOpen] = useState(false);
+  const [value, setValue] = useState(null);
+  const [items, setItems] = useState([
+    { label: 'Financial Statement', value: 'finance' },
+    { label: 'Balance Sheet', value: 'balance' },
+    { label: 'Income Statement', value: 'income' },
+  ]);
 
 
   const fetchData = async (sheetName: string, setDataFunction: React.Dispatch<React.SetStateAction<SheetData | null>>) => {
@@ -297,10 +327,34 @@ export default function App() {
             }
 
             <Text>{'\n'}</Text>
-            <Button title='Refresh' onPress={handleRefresh}></Button>
+            <View style={{ display: "flex", flexDirection: "row", justifyContent: "space-between", marginHorizontal: 30 }}>
+              <Button title='Refresh' onPress={handleRefresh}></Button>
+              <Button title='Export Report' onPress={handleOpenPress}></Button>
+            </View>
             <Text>{'\n'}</Text>
 
           </ScrollView>
+          <BottomSheet
+              ref={bottomSheetRef}
+              index={-1}
+              snapPoints={snapPoints}
+              onChange={handleSheetChanges}
+              enablePanDownToClose={true}
+              backdropComponent={renderBackDrop}
+            >
+              <View style={styles.contentContainer}>
+                <Text style={styles.titleSmall}>Export Report</Text>
+                <Text style={styles.label}>Please select a report to export:</Text>
+                <DropDownPicker
+                  open={open}
+                  value={value}
+                  items={items}
+                  setOpen={setOpen}
+                  setValue={setValue}
+                  setItems={setItems}
+                />
+              </View>
+            </BottomSheet>
         </>
       )}
     </>
@@ -343,8 +397,20 @@ const styles = StyleSheet.create({
   },
   titleSmall: {
     fontSize: 24,
-    marginTop: 15,
+    marginTop: 25,
     marginBottom: 20,
+    fontWeight: 'bold',
+  },
+  contentContainer: {
+    flex: 1,
+    paddingHorizontal: 25,
+    paddingVertical: 10,
+    // alignItems: 'center',
+  },
+  label: {
+    fontSize: 18,
+    marginBottom: 15,
+    color: 'grey',
   },
   filterTitle: {
     fontSize: 16,
