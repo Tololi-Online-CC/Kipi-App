@@ -56,35 +56,35 @@ export default function App() {
       population: 215,
       color: '#8ED5FC',
       legendFontColor: '#7F7F7F',
-      legendFontSize: 14,
+      legendFontSize: 15,
     },
     {
       name: 'Bus. Center',
       population: 128,
       color: '#008080',
       legendFontColor: '#7F7F7F',
-      legendFontSize: 14,
+      legendFontSize: 15,
     },
     {
       name: 'Board Room',
       population: 386,
       color: '#FF6F61',
       legendFontColor: '#7F7F7F',
-      legendFontSize: 14,
+      legendFontSize: 15,
     },
     {
       name: 'Meili',
       population: 219,
       color: '#21618C',
       legendFontColor: '#7F7F7F',
-      legendFontSize: 14,
+      legendFontSize: 15,
     },
     {
       name: 'Bkf. Area',
       population: 98,
       color: '#FFA07A',
       legendFontColor: '#7F7F7F',
-      legendFontSize: 14,
+      legendFontSize: 15,
     },
   ];
 
@@ -131,8 +131,6 @@ export default function App() {
         </View>
       </View>
 
-      <Text style={styles.link}>View More</Text>
-
       <Text style={styles.titleSmall}>Income</Text>
       <View style={{ justifyContent: 'center' }}>
         <BarChart
@@ -164,6 +162,7 @@ export default function App() {
           width={screenWidth}
           height={220}
           chartConfig={chartConfig}
+          bezier
         />
       </View>
 

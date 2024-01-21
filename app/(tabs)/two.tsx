@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import 'react-native-gesture-handler';
-import { View, Text, Dimensions, ScrollView, ActivityIndicator, Button, Alert, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, Dimensions, ScrollView, ActivityIndicator, Button, Alert, TouchableOpacity, StyleSheet, Pressable } from 'react-native';
 import { LineChart, BarChart, PieChart } from 'react-native-chart-kit';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
 import axios from 'axios';
-import { Table, Rows } from 'react-native-table-component';
+import { Link, router } from 'expo-router';
+import { Table, Rows } from 'react-native-reanimated-table';
 import BottomSheet, { BottomSheetBackdrop } from '@gorhom/bottom-sheet';
 import DropDownPicker from 'react-native-dropdown-picker';
 
@@ -36,14 +37,14 @@ export default function App() {
   const bottomSheetRef = useRef<BottomSheet>(null);
 
   // variables
-  const snapPoints = useMemo(() => ['25%', '55%',], []);
+  const snapPoints = useMemo(() => ['60%'], []);
 
   // callbacks
   const handleSheetChanges = useCallback((index: number) => {
     console.log('handleSheetChanges', index);
   }, []);
 
-  const handleOpenPress = () => { bottomSheetRef.current?.expand() };
+  const handleOpenPress = () => { bottomSheetRef.current?.expand(); };
   const renderBackDrop = useCallback(
     (props: any) => <BottomSheetBackdrop {...props} appearsOnIndex={0} disappearsOnIndex={-1} />, []
   );
@@ -55,6 +56,10 @@ export default function App() {
     { label: 'Financial Statement', value: 'finance' },
     { label: 'Balance Sheet', value: 'balance' },
     { label: 'Income Statement', value: 'income' },
+    { label: 'Liabilities Statement', value: 'liabilities' },
+    { label: 'Product Performance', value: 'prodPerformance' },
+    { label: 'Team Performance', value: 'teamPerformance' },
+    { label: 'Operational Performance', value: 'opsPerformance' },
   ]);
 
 
@@ -157,43 +162,47 @@ export default function App() {
 
   const renderLineChart = (data: SheetData | null, title: string) => {
     return (
-      <>
-        <Text style={styles.titleSmall}>{title}</Text>
-        <View style={{ justifyContent: 'center' }}>
-          <LineChart
-            data={{
-              labels: data?.values.map((row) => row[0]) || [],
-              datasets: [{ data: data?.values.map((row) => parseFloat(row[1])) || [] }],
-            }}
-            width={screenWidth}
-            height={220}
-            yAxisLabel={'N$'}
-            chartConfig={chartConfig}
-            bezier
-          />
-        </View>
-      </>
+      <Link href={{ pathname: "/ChartInfo", params: { data: JSON.stringify(data), title, chartType: "line" }, }} asChild >
+        <Pressable>
+          <Text style={styles.titleSmall}>{title}</Text>
+          <View style={{ justifyContent: 'center' }}>
+            <LineChart
+              data={{
+                labels: data?.values.map((row) => row[0]) || [],
+                datasets: [{ data: data?.values.map((row) => parseFloat(row[1])) || [] }],
+              }}
+              width={screenWidth}
+              height={220}
+              yAxisLabel={'N$'}
+              chartConfig={chartConfig}
+              bezier
+            />
+          </View>
+        </Pressable>
+      </Link>
     );
   };
 
   const renderBarChart = (data: SheetData | null, title: string) => {
     return (
-      <>
-        <Text style={styles.titleSmall}>{title}</Text>
-        <View style={{ justifyContent: 'center' }}>
-          <BarChart
-            data={{
-              labels: data?.values.map((row) => row[0]) || [],
-              datasets: [{ data: data?.values.map((row) => parseFloat(row[1])) || [] }],
-            }}
-            width={screenWidth}
-            height={220}
-            yAxisLabel="$"
-            yAxisSuffix=""
-            chartConfig={chartConfig}
-          />
-        </View>
-      </>
+      <Link href={{ pathname: "/ChartInfo", params: { data: JSON.stringify(data), title, chartType: "bar" }, }} asChild >
+        <Pressable>
+          <Text style={styles.titleSmall}>{title}</Text>
+          <View style={{ justifyContent: 'center' }}>
+            <BarChart
+              data={{
+                labels: data?.values.map((row) => row[0]) || [],
+                datasets: [{ data: data?.values.map((row) => parseFloat(row[1])) || [] }],
+              }}
+              width={screenWidth}
+              height={220}
+              yAxisLabel="$"
+              yAxisSuffix=""
+              chartConfig={chartConfig}
+            />
+          </View>
+        </Pressable>
+      </Link>
     );
   };
 
@@ -201,19 +210,17 @@ export default function App() {
     const tableData = data?.values || [];
 
     return (
-      <View>
-        <Text style={styles.titleSmall}>{title}</Text>
-        <View style={styles.tableContainer}>
-          <Table borderStyle={{ borderWidth: 1, borderColor: '#C1C0B9' }}>
-            <Rows data={tableData} textStyle={{
-              marginVertical: 5,
-              marginHorizontal: 5,
-              padding: 0,
-              fontSize: 11,
-            }} />
-          </Table>
-        </View>
-      </View>
+      <Link href={{ pathname: "/ChartInfo", params: { data: JSON.stringify(data), title, chartType: "table" }, }} asChild >
+        <Pressable>
+          <Text style={styles.titleSmall}>{title}</Text>
+          <View style={styles.tableContainer}>
+            <Table borderStyle={{ borderWidth: 1, borderColor: '#C1C0B9' }}>
+              <Rows data={tableData} style={{}} textStyle={{ margin: 5 }} />
+            </Table>
+          </View>
+       
+        </Pressable>
+      </Link>
     );
   };
 
@@ -235,24 +242,28 @@ export default function App() {
       population: parseInt(row[1], 10),
       color: modernColors[index % modernColors.length], // Use modulo to repeat colors if needed
       legendFontColor: '#7F7F7F',
-      legendFontSize: 14,
+      legendFontSize: 15,
     })) || [];
 
     return (
-      <View style={{ justifyContent: 'center' }}>
-        <Text style={styles.titleSmall}>{title}</Text>
-        <PieChart
-          data={pieChartData}
-          width={screenWidth * 0.9}
-          height={190}
-          chartConfig={chartConfig}
-          accessor={'population'}
-          backgroundColor={'transparent'}
-          paddingLeft=''
-          center={[5, 10]}
-        />
+      <Link href={{ pathname: "/ChartInfo", params: { data: JSON.stringify(data), title, chartType: "pie" }, }} asChild >
+        <Pressable>
+          <View style={{ justifyContent: 'center' }}>
+            <Text style={styles.titleSmall}>{title}</Text>
+            <PieChart
+              data={pieChartData}
+              width={screenWidth * 0.9}
+              height={190}
+              chartConfig={chartConfig}
+              accessor={'population'}
+              backgroundColor={'transparent'}
+              paddingLeft=''
+              center={[5, 10]}
+            />
 
-      </View>
+          </View>
+        </Pressable>
+      </Link>
     );
   };
 
@@ -329,32 +340,37 @@ export default function App() {
             <Text>{'\n'}</Text>
             <View style={{ display: "flex", flexDirection: "row", justifyContent: "space-between", marginHorizontal: 30 }}>
               <Button title='Refresh' onPress={handleRefresh}></Button>
-              <Button title='Export Report' onPress={handleOpenPress}></Button>
+              <Button title='Export Reports' onPress={handleOpenPress}></Button>
             </View>
             <Text>{'\n'}</Text>
 
           </ScrollView>
           <BottomSheet
-              ref={bottomSheetRef}
-              index={-1}
-              snapPoints={snapPoints}
-              onChange={handleSheetChanges}
-              enablePanDownToClose={true}
-              backdropComponent={renderBackDrop}
-            >
-              <View style={styles.contentContainer}>
-                <Text style={styles.titleSmall}>Export Report</Text>
-                <Text style={styles.label}>Please select a report to export:</Text>
-                <DropDownPicker
-                  open={open}
-                  value={value}
-                  items={items}
-                  setOpen={setOpen}
-                  setValue={setValue}
-                  setItems={setItems}
-                />
-              </View>
-            </BottomSheet>
+            ref={bottomSheetRef}
+            index={-1}
+            snapPoints={snapPoints}
+            onChange={handleSheetChanges}
+            enablePanDownToClose={true}
+            backdropComponent={renderBackDrop}
+          >
+            <View style={styles.contentContainer}>
+              <Text style={styles.titleSmall}>Export Reports</Text>
+              <Text style={styles.label}>Please select a report to export:</Text>
+              <DropDownPicker
+                open={open}
+                value={value}
+                items={items}
+                setOpen={setOpen}
+                setValue={setValue}
+                setItems={setItems}
+                // multiple={true}
+                // max={15}
+              />
+              <TouchableOpacity style={{marginVertical: 25, width: "100%", height: 50,backgroundColor: "black", borderRadius: 8, justifyContent: 'center', alignItems: "center"}}>
+                <Text style={{color: "white", fontSize: 18, fontWeight: "500"}}>Export</Text>
+              </TouchableOpacity>
+            </View>
+          </BottomSheet>
         </>
       )}
     </>
@@ -379,10 +395,12 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderWidth: 1,
     borderColor: 'black',
+    
   },
   buttonText: {
     color: 'white',
     fontSize: 14,
+    fontWeight: "500"
   },
   headerContainer: {
     flexDirection: 'row',
