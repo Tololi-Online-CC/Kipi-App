@@ -6,8 +6,9 @@ const UserProfile = () => {
     <View style={styles.container}>
       <View style={styles.header}>
         <Image
-          source={require('./../../assets/images/marigold-logo.png')}
+          source={require('./../../assets/images/didact-logo.png')}
           style={styles.profileImage}
+          resizeMode="contain"
         />
         <Text style={styles.userName}>Operations Manager</Text>
         <Text style={styles.userEmail}>info@didactdigital.com</Text>

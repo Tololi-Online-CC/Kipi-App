@@ -98,9 +98,9 @@ export default function UserProfile() {
                 <View style={styles.highlightItem}>
                     <Text style={{ fontSize: 15 }}>
                         For the selected data chart,
-                        the highest value is N${stats.highest} and occurred at label {stats.highestLabel}.
-                        The average value is N${stats.average}.
-                        And the lowest value is N${stats.lowest} and occurred at label {stats.lowestLabel}.
+                        the highest value is {stats.highest} and occurred at {stats.highestLabel}.
+                        The average value is {stats.average}.
+                        And the lowest value is {stats.lowest} and occurred at {stats.lowestLabel}.
                     </Text>
                 </View>
             </>
@@ -171,9 +171,9 @@ export default function UserProfile() {
                 <View style={styles.highlightItem}>
                     <Text style={{ fontSize: 15 }}>
                         For the selected data chart,
-                        the highest value is N${stats.highest} and occurred at label {stats.highestLabel}.
-                        The average value is N${stats.average}.
-                        And the lowest value is N${stats.lowest} and occurred at label {stats.lowestLabel}.
+                        the highest value is {stats.highest} and occurred at {stats.highestLabel}.
+                        The average value is {stats.average}.
+                        And the lowest value is {stats.lowest} and occurred at {stats.lowestLabel}.
                     </Text>
                 </View>
             </>
@@ -274,9 +274,9 @@ export default function UserProfile() {
                 <View style={styles.highlightItem}>
                     <Text style={{ fontSize: 15 }}>
                         For the data chart,
-                        the highest value is N${stats.highest} and occurred at label {stats.highestLabel}.
-                        The average value is N${stats.average}.
-                        And the lowest value is N${stats.lowest} and occurred at label {stats.lowestLabel}.
+                        the highest value is {stats.highest} and occurred at {stats.highestLabel}.
+                        The average value is {stats.average}.
+                        And the lowest value is {stats.lowest} and occurred at {stats.lowestLabel}.
                     </Text>
                 </View>
             </View>

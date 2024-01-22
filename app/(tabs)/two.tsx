@@ -25,6 +25,10 @@ export default function App() {
   const [productPerformanceData, setProductPerformanceData] = useState<SheetData | null>(null);
   const [taskProgressData, setTaskProgressData] = useState<SheetData | null>(null);
   const [staffDistributionData, setStaffDistributionData] = useState<SheetData | null>(null);
+  const [webMetrics, setWebMetricsData] = useState<SheetData | null>(null);
+  const [marketingBudget, setMarketingBudgetData] = useState<SheetData | null>(null);
+  const [liabilities, setLiabilitiesData] = useState<SheetData | null>(null);
+  const [assets, setAssetsData] = useState<SheetData | null>(null);
 
 
   const [loading, setLoading] = useState(true);
@@ -105,6 +109,10 @@ export default function App() {
     loadData('productPerformance', setProductPerformanceData);
     loadData('taskProgress', setTaskProgressData);
     loadData('staffDistribution', setStaffDistributionData);
+    loadData('webMetrics', setWebMetricsData);
+    loadData('marketingBudget', setMarketingBudgetData);
+    loadData('assets', setAssetsData);
+    loadData('liabilities', setLiabilitiesData);
 
 
     const networkListener = NetInfo.addEventListener((state) => {
@@ -114,6 +122,10 @@ export default function App() {
         fetchData('productPerformance', setProductPerformanceData);
         fetchData('taskProgress', setTaskProgressData);
         fetchData('staffDistribution', setStaffDistributionData);
+        fetchData('webMetrics', setWebMetricsData);
+        fetchData('marketingBudget', setMarketingBudgetData);
+        fetchData('assets', setAssetsData);
+        fetchData('liabilities', setLiabilitiesData);
       }
     });
 
@@ -136,6 +148,10 @@ export default function App() {
       fetchData('productPerformance', setProductPerformanceData);
       fetchData('taskProgress', setTaskProgressData);
       fetchData('staffDistribution', setStaffDistributionData);
+      fetchData('webMetrics', setWebMetricsData);
+      fetchData('marketingBudget', setMarketingBudgetData);
+      fetchData('assets', setAssetsData);
+      fetchData('liabilities', setLiabilitiesData);
     } else {
       Alert.alert('No internet connection. Please connect to the internet to refresh data.');
     }
@@ -165,7 +181,7 @@ export default function App() {
       <Link href={{ pathname: "/ChartInfo", params: { data: JSON.stringify(data), title, chartType: "line" }, }} asChild >
         <Pressable>
           <Text style={styles.titleSmall}>{title}</Text>
-          <View style={{ justifyContent: 'center' }}>
+          <View style={{ justifyContent: 'center', alignItems: 'center' }}>
             <LineChart
               data={{
                 labels: data?.values.map((row) => row[0]) || [],
@@ -173,7 +189,7 @@ export default function App() {
               }}
               width={screenWidth}
               height={220}
-              yAxisLabel={'N$'}
+              yAxisLabel={''}
               chartConfig={chartConfig}
               bezier
             />
@@ -218,7 +234,7 @@ export default function App() {
               <Rows data={tableData} style={{}} textStyle={{ margin: 5 }} />
             </Table>
           </View>
-       
+
         </Pressable>
       </Link>
     );
@@ -287,17 +303,19 @@ export default function App() {
               <Text style={styles.buttonText}>Finances</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.button}>
-              <Text style={styles.buttonText} onPress={() => handleSelection('marketing')}>Marketing</Text>
+            <TouchableOpacity style={styles.button} onPress={() => handleSelection('marketing')}>
+              <Text style={styles.buttonText}>Marketing</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.button}>
-              <Text style={styles.buttonText} onPress={() => handleSelection('operations')}>Operations</Text>
+            <TouchableOpacity style={styles.button} onPress={() => handleSelection('hr')}>
+              <Text style={styles.buttonText}>Human Resources</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.button}>
-              <Text style={styles.buttonText} onPress={() => handleSelection('hr')}>Human Resources</Text>
+            <TouchableOpacity style={styles.button} onPress={() => handleSelection('operations')}>
+              <Text style={styles.buttonText}>Operations</Text>
             </TouchableOpacity>
+
+
 
           </ScrollView>
           <ScrollView style={styles.container}>
@@ -306,15 +324,75 @@ export default function App() {
               selectedComponent === "finance" ? (
                 <>
                   {renderLineChart(incomeData, 'Income')}
+                  {renderBarChart(assets, 'Assets')}
                   {renderLineChart(expensesData, 'Expenses')}
+                  {renderBarChart(liabilities, 'Liabilities')}
                   {renderBarChart(productPerformanceData, 'Product Performance')}
                 </>
 
               ) : selectedComponent === "marketing" ? (
                 <>
-                  {renderLineChart(incomeData, 'Campaign Performance')}
+                  <Text style={styles.titleSmall}>Social Media Performance</Text>
+                  <View style={styles.highlightContainer}>
+
+                    <View style={styles.highlightItem}>
+                      <Text style={styles.highlightTextSmall}>Impressions</Text>
+                      <Text style={styles.highlightTextLarge}>2731</Text>
+                    </View>
+
+                    <View style={styles.highlightItem}>
+                      <Text style={styles.highlightTextSmall}>Engagement</Text>
+                      <Text style={styles.highlightTextLarge}>1320</Text>
+                    </View>
+
+                    <View style={styles.highlightItem}>
+                      <Text style={styles.highlightTextSmall}>Reach</Text>
+                      <Text style={styles.highlightTextLarge}>3920</Text>
+                    </View>
+
+                  </View>
+                  <View style={styles.highlightContainer}>
+
+                    <View style={styles.highlightItem}>
+                      <Text style={styles.highlightTextSmall}>Followers</Text>
+                      <Text style={styles.highlightTextLarge}>30</Text>
+                    </View>
+
+                    <View style={styles.highlightItem}>
+                      <Text style={styles.highlightTextSmall}>Posts</Text>
+                      <Text style={styles.highlightTextLarge}>7</Text>
+                    </View>
+
+                    <View style={styles.highlightItem}>
+                      <Text style={styles.highlightTextSmall}>Likes</Text>
+                      <Text style={styles.highlightTextLarge}>500</Text>
+                    </View>
+
+                  </View>
+                  {renderBarChart(productPerformanceData, 'Product Performance')}
+                  {renderLineChart(webMetrics, 'Website Performance')}
+                  <Text style={styles.titleSmall}>Email Performance</Text>
+                  <View style={styles.highlightContainer}>
+
+                    <View style={styles.highlightItem}>
+                      <Text style={styles.highlightTextSmall}>Subscribers</Text>
+                      <Text style={styles.highlightTextLarge}>2731</Text>
+                    </View>
+
+                    <View style={styles.highlightItem}>
+                      <Text style={styles.highlightTextSmall}>Open Rate</Text>
+                      <Text style={styles.highlightTextLarge}>69%</Text>
+                    </View>
+
+                    <View style={styles.highlightItem}>
+                      <Text style={styles.highlightTextSmall}>Conversion</Text>
+                      <Text style={styles.highlightTextLarge}>24.1%</Text>
+                    </View>
+
+                  </View>
+                  {renderBarChart(marketingBudget, 'Marketing Budget')}
                   {renderBarChart(productPerformanceData, 'Email Marketing KPIs')}
-                  {renderLineChart(expensesData, 'Marketing Budget')}
+
                 </>
               ) : selectedComponent === "operations" ? (
                 <>
@@ -324,9 +402,37 @@ export default function App() {
                 </>
               ) : selectedComponent === "hr" ? (
                 <>
-                  {renderTable(taskProgressData, 'Task Progress')}
+                  <Text style={styles.titleSmall}>HR Performance</Text>
+                  <View style={styles.highlightContainer}>
+
+                    <View style={styles.highlightItem}>
+                      <Text style={styles.highlightTextSmall}>Satisfaction </Text>
+                      <Text style={styles.highlightTextLarge}>87%</Text>
+                    </View>
+
+                    <View style={styles.highlightItem}>
+                      <Text style={styles.highlightTextSmall}>Retention</Text>
+                      <Text style={styles.highlightTextLarge}>100%</Text>
+                    </View>
+
+                  </View>
+                  <View style={styles.highlightContainer}>
+
+                    <View style={styles.highlightItem}>
+                      <Text style={styles.highlightTextSmall}>Turnover </Text>
+                      <Text style={styles.highlightTextLarge}>0%</Text>
+                    </View>
+
+                    <View style={styles.highlightItem}>
+                      <Text style={styles.highlightTextSmall}>Productivity</Text>
+                      <Text style={styles.highlightTextLarge}>93.3%</Text>
+                    </View>
+
+                  </View>
                   {renderPieChart(staffDistributionData, 'Staff Distribution')}
-                  {renderBarChart(productPerformanceData, 'Product Performance')}
+                  {renderTable(taskProgressData, 'Task Progress')}
+
+                  {/* {renderBarChart(productPerformanceData, 'Product Performance')} */}
                 </>
               ) : (
                 <>
@@ -363,11 +469,11 @@ export default function App() {
                 setOpen={setOpen}
                 setValue={setValue}
                 setItems={setItems}
-                // multiple={true}
-                // max={15}
+              // multiple={true}
+              // max={15}
               />
-              <TouchableOpacity style={{marginVertical: 25, width: "100%", height: 50,backgroundColor: "black", borderRadius: 8, justifyContent: 'center', alignItems: "center"}}>
-                <Text style={{color: "white", fontSize: 18, fontWeight: "500"}}>Export</Text>
+              <TouchableOpacity style={{ marginVertical: 25, width: "100%", height: 50, backgroundColor: "black", borderRadius: 8, justifyContent: 'center', alignItems: "center" }}>
+                <Text style={{ color: "white", fontSize: 18, fontWeight: "500" }}>Export</Text>
               </TouchableOpacity>
             </View>
           </BottomSheet>
@@ -395,7 +501,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderWidth: 1,
     borderColor: 'black',
-    
+
   },
   buttonText: {
     color: 'white',
@@ -424,6 +530,27 @@ const styles = StyleSheet.create({
     paddingHorizontal: 25,
     paddingVertical: 10,
     // alignItems: 'center',
+  },
+  highlightContainer: {
+    flex: 1,
+    flexDirection: 'row', // Arrange items horizontally
+    justifyContent: 'space-between', // Distribute items evenly along the main axis
+    alignItems: 'center',
+  },
+  highlightItem: {
+    flex: 1, // Each item takes equal width
+    backgroundColor: '#e0e0e0',
+    padding: 16,
+    marginVertical: 8,
+    marginHorizontal: 4,
+    borderRadius: 8,
+  },
+  highlightTextSmall: {
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  highlightTextLarge: {
+    fontSize: 18,
   },
   label: {
     fontSize: 18,

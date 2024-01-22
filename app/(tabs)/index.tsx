@@ -1,14 +1,182 @@
-import {
-  Text,
-  Image,
-  ScrollView,
-  StyleSheet,
-  View,
-  Dimensions,
-} from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { Text, Image, ScrollView, StyleSheet, ActivityIndicator, View, Dimensions, Pressable } from 'react-native';
 import { LineChart, BarChart, PieChart } from 'react-native-chart-kit';
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import NetInfo from '@react-native-community/netinfo';
+import { Link } from 'expo-router';
+
+interface SheetData {
+  range: string;
+  majorDimension: string;
+  values: Array<Array<string>>;
+}
 
 export default function App() {
+
+  const screenWidth = Dimensions.get('window').width;
+
+
+  const [incomeData, setIncomeData] = useState<SheetData | null>(null);
+  const [expensesData, setExpensesData] = useState<SheetData | null>(null);
+  const [productPerformanceData, setProductPerformanceData] = useState<SheetData | null>(null);
+  const [staffDistributionData, setStaffDistributionData] = useState<SheetData | null>(null);
+
+  const [loading, setLoading] = useState(true);
+  const [loadingCount, setLoadingCount] = useState(0);
+
+  const fetchData = async (sheetName: string, setDataFunction: React.Dispatch<React.SetStateAction<SheetData | null>>) => {
+    try {
+      const response = await axios.get<SheetData>(
+        `https://sheets.googleapis.com/v4/spreadsheets/1dd3iyQR_3cMW9gFpyoyKbwLpwyBdzajQdA6qN31TjBI/values/${sheetName}?valueRenderOption=FORMATTED_VALUE&key=AIzaSyBi1vBNxajCCA26JnTVZBv80rZ12bufTkA`
+      );
+
+      response.data.values = response.data.values.slice(1);
+
+      setDataFunction(response.data);
+      await AsyncStorage.setItem(`${sheetName}Data`, JSON.stringify(response.data));
+    } catch (error) {
+      console.error(`Error fetching ${sheetName} data:`, error);
+    } finally {
+      setLoadingCount((prevCount) => prevCount + 1);
+    }
+  };
+
+  const loadData = async (sheetName: string, setDataFunction: React.Dispatch<React.SetStateAction<SheetData | null>>) => {
+    try {
+      const storedData = await AsyncStorage.getItem(`${sheetName}Data`);
+      if (storedData) {
+        setDataFunction(JSON.parse(storedData));
+      }
+    } catch (error) {
+      console.error(`Error loading ${sheetName} data from AsyncStorage:`, error);
+    } finally {
+      setLoadingCount((prevCount) => prevCount + 1);
+    }
+  };
+
+  const checkInternetConnectivity = async () => {
+    const netInfo = await NetInfo.fetch();
+    return netInfo.isConnected;
+  };
+
+  useEffect(() => {
+    setLoadingCount(0);
+    loadData('income', setIncomeData);
+    loadData('expenses', setExpensesData);
+    loadData('productPerformance', setProductPerformanceData);
+    loadData('staffDistribution', setStaffDistributionData);
+
+    const networkListener = NetInfo.addEventListener((state) => {
+      if (state.isConnected) {
+        fetchData('income', setIncomeData);
+        fetchData('expenses', setExpensesData);
+        fetchData('productPerformance', setProductPerformanceData);
+        fetchData('staffDistribution', setStaffDistributionData);
+      }
+    });
+
+    return () => networkListener();
+  }, []);
+
+  useEffect(() => {
+    if (loadingCount === 5) {
+      setLoading(false); // Hide loader when all data sets are loaded
+    }
+  }, [loadingCount]);
+
+
+
+  const renderLineChart = (data: SheetData | null, title: string) => {
+    return (
+      <Link href={{ pathname: "/ChartInfo", params: { data: JSON.stringify(data), title, chartType: "line" }, }} asChild >
+        <Pressable>
+          <Text style={styles.titleSmall}>{title}</Text>
+          <View style={{ justifyContent: 'center', alignItems: 'center' }}>
+            <LineChart
+              data={{
+                labels: data?.values.map((row) => row[0]) || [],
+                datasets: [{ data: data?.values.map((row) => parseFloat(row[1])) || [] }],
+              }}
+              width={screenWidth}
+              height={220}
+              yAxisLabel={''}
+              chartConfig={chartConfig}
+              bezier
+            />
+          </View>
+        </Pressable>
+      </Link>
+    );
+  };
+
+  const renderBarChart = (data: SheetData | null, title: string) => {
+    return (
+      <Link href={{ pathname: "/ChartInfo", params: { data: JSON.stringify(data), title, chartType: "bar" }, }} asChild >
+        <Pressable>
+          <Text style={styles.titleSmall}>{title}</Text>
+          <View style={{ justifyContent: 'center' }}>
+            <BarChart
+              data={{
+                labels: data?.values.map((row) => row[0]) || [],
+                datasets: [{ data: data?.values.map((row) => parseFloat(row[1])) || [] }],
+              }}
+              width={screenWidth}
+              height={220}
+              yAxisLabel="$"
+              yAxisSuffix=""
+              chartConfig={chartConfig}
+            />
+          </View>
+        </Pressable>
+      </Link>
+    );
+  };
+
+  const renderPieChart = (data: SheetData | null, title: string) => {
+    const modernColors = [
+      '#3498db', // Blue
+      '#e74c3c', // Red
+      '#2ecc71', // Green
+      '#f39c12', // Yellow
+      '#9b59b6', // Purple
+      '#1abc9c', // Teal
+      '#d35400', // Orange
+      '#34495e', // Dark Gray
+      '#95a5a6', // Light Gray
+    ];
+
+    const pieChartData = data?.values.map((row, index) => ({
+      name: row[0],
+      population: parseInt(row[1], 10),
+      color: modernColors[index % modernColors.length], // Use modulo to repeat colors if needed
+      legendFontColor: '#7F7F7F',
+      legendFontSize: 15,
+    })) || [];
+
+    return (
+      <Link href={{ pathname: "/ChartInfo", params: { data: JSON.stringify(data), title, chartType: "pie" }, }} asChild >
+        <Pressable>
+          <View style={{ justifyContent: 'center' }}>
+            <Text style={styles.titleSmall}>{title}</Text>
+            <PieChart
+              data={pieChartData}
+              width={screenWidth * 0.9}
+              height={190}
+              chartConfig={chartConfig}
+              accessor={'population'}
+              backgroundColor={'transparent'}
+              paddingLeft=''
+              center={[5, 10]}
+            />
+
+          </View>
+        </Pressable>
+      </Link>
+    );
+  };
+
+
   const chartConfig = {
     backgroundGradientFrom: '#ffffff',
     backgroundGradientFromOpacity: 0,
@@ -21,164 +189,70 @@ export default function App() {
     decimalPlaces: 0,
   };
 
-  const screenWidth = Dimensions.get('window').width;
 
-  const incomeData = {
-    labels: ['Rooms', 'Jade', 'Bar', 'Events'],
-    datasets: [
-      {
-        data: [2000000, 1600000, 800000, 500000],
-      },
-    ],
-  };
 
-  const expenseData = {
-    labels: ['Staff', 'COGS', 'Operations', 'Other'],
-    datasets: [
-      {
-        data: [200000, 500000, 150000, 70000],
-      },
-    ],
-  };
-
-  const roomData = {
-    labels: ['1 Dec', '8 Dec', '15 Dec', '22 Dec', '29 Dec'],
-    datasets: [
-      {
-        data: [14, 34, 27, 43, 43],
-      },
-    ],
-  };
-
-  const eventData = [
-    {
-      name: 'KTV',
-      population: 215,
-      color: '#8ED5FC',
-      legendFontColor: '#7F7F7F',
-      legendFontSize: 15,
-    },
-    {
-      name: 'Bus. Center',
-      population: 128,
-      color: '#008080',
-      legendFontColor: '#7F7F7F',
-      legendFontSize: 15,
-    },
-    {
-      name: 'Board Room',
-      population: 386,
-      color: '#FF6F61',
-      legendFontColor: '#7F7F7F',
-      legendFontSize: 15,
-    },
-    {
-      name: 'Meili',
-      population: 219,
-      color: '#21618C',
-      legendFontColor: '#7F7F7F',
-      legendFontSize: 15,
-    },
-    {
-      name: 'Bkf. Area',
-      population: 98,
-      color: '#FFA07A',
-      legendFontColor: '#7F7F7F',
-      legendFontSize: 15,
-    },
-  ];
 
   return (
-    <ScrollView style={styles.container}>
-
-      <View style={styles.topContainer}>
-        <Image
-          source={require('./../../assets/images/WallpaperCraft.webp')}
-          style={styles.backgroundImage}
-        />
-        <View style={styles.overlay} />
-        <Text style={styles.overlayText}>Didact Digital</Text>
-      </View>
-
-      <Text style={styles.title}>Welcome Back!</Text>
-
-      <View>
-        <View style={styles.highlightContainer}>
-
-          <View style={styles.highlightItem}>
-            <Text style={styles.highlightTextSmall}>Total Income</Text>
-            <Text style={styles.highlightTextLarge}>N$2.9M</Text>
+    <>
+      {
+        loading ? (
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+            <ActivityIndicator size="large" color="#000000" />
+            <Text>Loading...</Text>
           </View>
+        ) : (
 
-          <View style={styles.highlightItem}>
-            <Text style={styles.highlightTextSmall}>Total Expenses</Text>
-            <Text style={styles.highlightTextLarge}>N$725K</Text>
-          </View>
+          <ScrollView style={styles.container}>
 
-        </View>
-        <View style={styles.highlightContainer}>
+            <View style={styles.topContainer}>
+              <Image
+                source={require('./../../assets/images/WallpaperCraft.webp')}
+                style={styles.backgroundImage}
+              />
+              <View style={styles.overlay} />
+              <Text style={styles.overlayText}>Didact Digital</Text>
+            </View>
 
-          <View style={styles.highlightItem}>
-            <Text style={styles.highlightTextSmall}>Rooms Occupied</Text>
-            <Text style={styles.highlightTextLarge}>1432</Text>
-          </View>
+            <Text style={styles.title}>Welcome Back!</Text>
 
-          <View style={styles.highlightItem}>
-            <Text style={styles.highlightTextSmall}>Functions Held</Text>
-            <Text style={styles.highlightTextLarge}>874</Text>
-          </View>
+            <View>
+              <View style={styles.highlightContainer}>
 
-        </View>
-      </View>
+                <View style={styles.highlightItem}>
+                  <Text style={styles.highlightTextSmall}>Total Income</Text>
+                  <Text style={styles.highlightTextLarge}>N$2.9M</Text>
+                </View>
 
-      <Text style={styles.titleSmall}>Income</Text>
-      <View style={{ justifyContent: 'center' }}>
-        <BarChart
-          data={incomeData}
-          width={screenWidth}
-          height={220}
-          yAxisLabel="$"
-          yAxisSuffix=""
-          chartConfig={chartConfig}
-        />
-      </View>
+                <View style={styles.highlightItem}>
+                  <Text style={styles.highlightTextSmall}>Total Expenses</Text>
+                  <Text style={styles.highlightTextLarge}>N$725K</Text>
+                </View>
 
-      <Text style={styles.titleSmall}>Expenses</Text>
-      <View style={{ justifyContent: 'center' }}>
-        <BarChart
-          data={expenseData}
-          width={screenWidth}
-          height={220}
-          yAxisLabel="$"
-          yAxisSuffix=''
-          chartConfig={chartConfig}
-        />
-      </View>
+              </View>
+              <View style={styles.highlightContainer}>
 
-      <Text style={styles.titleSmall}>Occupancy</Text>
-      <View style={{ justifyContent: 'center' }}>
-        <LineChart
-          data={roomData}
-          width={screenWidth}
-          height={220}
-          chartConfig={chartConfig}
-          bezier
-        />
-      </View>
+                <View style={styles.highlightItem}>
+                  <Text style={styles.highlightTextSmall}>Business Clients</Text>
+                  <Text style={styles.highlightTextLarge}>34</Text>
+                </View>
 
-      <Text style={styles.titleSmall}>Functions Held</Text>
-      <PieChart
-        data={eventData}
-        width={screenWidth * 0.9}
-        height={190}
-        chartConfig={chartConfig}
-        accessor={'population'}
-        backgroundColor={'transparent'}
-        paddingLeft=''
-        center={[5, 10]}
-      />
-      <Text>{'\n'}</Text>
-    </ScrollView>
+                <View style={styles.highlightItem}>
+                  <Text style={styles.highlightTextSmall}>Users</Text>
+                  <Text style={styles.highlightTextLarge}>874</Text>
+                </View>
+
+              </View>
+            </View>
+
+            {renderLineChart(incomeData, "Income")}
+            {renderBarChart(expensesData, "Expense")}
+            {renderBarChart(productPerformanceData, "Product Performance")}
+            {renderPieChart(staffDistributionData, "Staff Distribution")}
+
+            <Text>{'\n'}</Text>
+          </ScrollView>
+        )
+      }</>
   );
 }
 
@@ -242,6 +316,7 @@ const styles = StyleSheet.create({
   },
   highlightTextSmall: {
     fontSize: 12,
+    fontWeight: 'bold',
   },
   highlightTextLarge: {
     fontSize: 18,
