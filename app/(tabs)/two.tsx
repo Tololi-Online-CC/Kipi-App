@@ -1,14 +1,16 @@
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import 'react-native-gesture-handler';
+import { RefreshControl } from 'react-native-gesture-handler';
 import { View, Text, Dimensions, ScrollView, ActivityIndicator, Button, Alert, TouchableOpacity, StyleSheet, Pressable } from 'react-native';
 import { LineChart, BarChart, PieChart } from 'react-native-chart-kit';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
 import axios from 'axios';
-import { Link, router } from 'expo-router';
+import { Link } from 'expo-router';
 import { Table, Rows } from 'react-native-reanimated-table';
 import BottomSheet, { BottomSheetBackdrop } from '@gorhom/bottom-sheet';
 import DropDownPicker from 'react-native-dropdown-picker';
+
 
 interface SheetData {
   range: string;
@@ -30,10 +32,9 @@ export default function App() {
   const [liabilities, setLiabilitiesData] = useState<SheetData | null>(null);
   const [assets, setAssetsData] = useState<SheetData | null>(null);
 
-
-  const [loading, setLoading] = useState(true);
-  const [loadingCount, setLoadingCount] = useState(0);
   const [selectedComponent, setSelectedComponent] = useState("finance");
+
+  const [refreshing, setRefreshing] = useState(false);
 
   // Bottom Sheet
 
@@ -79,9 +80,7 @@ export default function App() {
       await AsyncStorage.setItem(`${sheetName}Data`, JSON.stringify(response.data));
     } catch (error) {
       console.error(`Error fetching ${sheetName} data:`, error);
-    } finally {
-      setLoadingCount((prevCount) => prevCount + 1);
-    }
+    } 
   };
 
   const loadData = async (sheetName: string, setDataFunction: React.Dispatch<React.SetStateAction<SheetData | null>>) => {
@@ -92,9 +91,7 @@ export default function App() {
       }
     } catch (error) {
       console.error(`Error loading ${sheetName} data from AsyncStorage:`, error);
-    } finally {
-      setLoadingCount((prevCount) => prevCount + 1);
-    }
+    } 
   };
 
   const checkInternetConnectivity = async () => {
@@ -103,7 +100,6 @@ export default function App() {
   };
 
   useEffect(() => {
-    setLoadingCount(0);
     loadData('income', setIncomeData);
     loadData('expenses', setExpensesData);
     loadData('productPerformance', setProductPerformanceData);
@@ -132,17 +128,11 @@ export default function App() {
     return () => networkListener();
   }, []);
 
-  useEffect(() => {
-    if (loadingCount === 5) {
-      setLoading(false); // Hide loader when all data sets are loaded
-    }
-  }, [loadingCount]);
 
   const handleRefresh = async () => {
     const isConnected = await checkInternetConnectivity();
     if (isConnected) {
-      setLoading(true);
-      setLoadingCount(0);
+      setRefreshing(true);
       fetchData('income', setIncomeData);
       fetchData('expenses', setExpensesData);
       fetchData('productPerformance', setProductPerformanceData);
@@ -152,10 +142,17 @@ export default function App() {
       fetchData('marketingBudget', setMarketingBudgetData);
       fetchData('assets', setAssetsData);
       fetchData('liabilities', setLiabilitiesData);
+      setRefreshing(false);
     } else {
       Alert.alert('No internet connection. Please connect to the internet to refresh data.');
+      setRefreshing(false);
     }
   };
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    handleRefresh()
+  }, []);
 
   const handleSelection = (component: string) => {
     setSelectedComponent(component);
@@ -288,13 +285,7 @@ export default function App() {
 
   return (
     <>
-      {loading ? (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <ActivityIndicator size="large" color="#000000" />
-          <Text>Loading...</Text>
-        </View>
-      ) : (
-        <>
+      
           <ScrollView
             horizontal
             contentContainerStyle={styles.buttonContainer}
@@ -318,16 +309,16 @@ export default function App() {
 
 
           </ScrollView>
-          <ScrollView style={styles.container}>
+          <ScrollView style={styles.container} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh}></RefreshControl>}>
 
             {
               selectedComponent === "finance" ? (
                 <>
-                  {renderLineChart(incomeData, 'Income')}
-                  {renderBarChart(assets, 'Assets')}
-                  {renderLineChart(expensesData, 'Expenses')}
-                  {renderBarChart(liabilities, 'Liabilities')}
-                  {renderBarChart(productPerformanceData, 'Product Performance')}
+                  {incomeData && renderLineChart(incomeData, 'Income')}
+                  {assets && renderBarChart(assets, 'Assets')}
+                  {expensesData && renderLineChart(expensesData, 'Expenses')}
+                  {liabilities && renderBarChart(liabilities, 'Liabilities')}
+                  {productPerformanceData && renderBarChart(productPerformanceData, 'Product Performance')}
                 </>
 
               ) : selectedComponent === "marketing" ? (
@@ -369,8 +360,8 @@ export default function App() {
                     </View>
 
                   </View>
-                  {renderBarChart(productPerformanceData, 'Product Performance')}
-                  {renderLineChart(webMetrics, 'Website Performance')}
+                  {productPerformanceData && renderBarChart(productPerformanceData, 'Product Performance')}
+                  {webMetrics && renderLineChart(webMetrics, 'Website Performance')}
                   <Text style={styles.titleSmall}>Email Performance</Text>
                   <View style={styles.highlightContainer}>
 
@@ -390,15 +381,15 @@ export default function App() {
                     </View>
 
                   </View>
-                  {renderBarChart(marketingBudget, 'Marketing Budget')}
-                  {renderBarChart(productPerformanceData, 'Email Marketing KPIs')}
+                  {marketingBudget && renderBarChart(marketingBudget, 'Marketing Budget')}
+                  {productPerformanceData && renderBarChart(productPerformanceData, 'Email Marketing KPIs')}
 
                 </>
               ) : selectedComponent === "operations" ? (
                 <>
-                  {renderLineChart(incomeData, 'Operation Performance')}
-                  {renderLineChart(expensesData, 'Operation Tasks')}
-                  {renderBarChart(productPerformanceData, 'Operation Budget')}
+                  {incomeData && renderLineChart(incomeData, 'Operation Performance')}
+                  {expensesData && renderLineChart(expensesData, 'Operation Tasks')}
+                  {productPerformanceData && renderBarChart(productPerformanceData, 'Operation Budget')}
                 </>
               ) : selectedComponent === "hr" ? (
                 <>
@@ -429,8 +420,8 @@ export default function App() {
                     </View>
 
                   </View>
-                  {renderPieChart(staffDistributionData, 'Staff Distribution')}
-                  {renderTable(taskProgressData, 'Task Progress')}
+                  {staffDistributionData && renderPieChart(staffDistributionData, 'Staff Distribution')}
+                  {taskProgressData && renderTable(taskProgressData, 'Task Progress')}
 
                   {/* {renderBarChart(productPerformanceData, 'Product Performance')} */}
                 </>
@@ -444,8 +435,8 @@ export default function App() {
             }
 
             <Text>{'\n'}</Text>
-            <View style={{ display: "flex", flexDirection: "row", justifyContent: "space-between", marginHorizontal: 30 }}>
-              <Button title='Refresh' onPress={handleRefresh}></Button>
+            <View style={{ display: "flex", flexDirection: "row", justifyContent: "center", marginHorizontal: 30 }}>
+              {/* <Button title='Refresh' onPress={handleRefresh}></Button> */}
               <Button title='Export Reports' onPress={handleOpenPress}></Button>
             </View>
             <Text>{'\n'}</Text>
@@ -477,8 +468,7 @@ export default function App() {
               </TouchableOpacity>
             </View>
           </BottomSheet>
-        </>
-      )}
+      
     </>
   );
 }

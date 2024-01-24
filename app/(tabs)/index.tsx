@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { Text, Image, ScrollView, StyleSheet, ActivityIndicator, View, Dimensions, Pressable } from 'react-native';
+import { useState, useEffect, useCallback } from 'react';
+import 'react-native-gesture-handler';
+import { Text, Image, ScrollView, StyleSheet, ActivityIndicator, View, Dimensions, Pressable, Alert } from 'react-native';
 import { LineChart, BarChart, PieChart } from 'react-native-chart-kit';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
 import { Link } from 'expo-router';
+import { RefreshControl } from 'react-native-gesture-handler';
 
 interface SheetData {
   range: string;
@@ -15,15 +17,14 @@ interface SheetData {
 export default function App() {
 
   const screenWidth = Dimensions.get('window').width;
+  const [refreshing, setRefreshing] = useState(false);
 
 
   const [incomeData, setIncomeData] = useState<SheetData | null>(null);
   const [expensesData, setExpensesData] = useState<SheetData | null>(null);
   const [productPerformanceData, setProductPerformanceData] = useState<SheetData | null>(null);
   const [staffDistributionData, setStaffDistributionData] = useState<SheetData | null>(null);
-
-  const [loading, setLoading] = useState(true);
-  const [loadingCount, setLoadingCount] = useState(0);
+  
 
   const fetchData = async (sheetName: string, setDataFunction: React.Dispatch<React.SetStateAction<SheetData | null>>) => {
     try {
@@ -37,9 +38,7 @@ export default function App() {
       await AsyncStorage.setItem(`${sheetName}Data`, JSON.stringify(response.data));
     } catch (error) {
       console.error(`Error fetching ${sheetName} data:`, error);
-    } finally {
-      setLoadingCount((prevCount) => prevCount + 1);
-    }
+    } 
   };
 
   const loadData = async (sheetName: string, setDataFunction: React.Dispatch<React.SetStateAction<SheetData | null>>) => {
@@ -50,8 +49,6 @@ export default function App() {
       }
     } catch (error) {
       console.error(`Error loading ${sheetName} data from AsyncStorage:`, error);
-    } finally {
-      setLoadingCount((prevCount) => prevCount + 1);
     }
   };
 
@@ -61,7 +58,6 @@ export default function App() {
   };
 
   useEffect(() => {
-    setLoadingCount(0);
     loadData('income', setIncomeData);
     loadData('expenses', setExpensesData);
     loadData('productPerformance', setProductPerformanceData);
@@ -79,11 +75,24 @@ export default function App() {
     return () => networkListener();
   }, []);
 
-  useEffect(() => {
-    if (loadingCount === 5) {
-      setLoading(false); // Hide loader when all data sets are loaded
+  const handleRefresh = async () => {
+    const isConnected = await checkInternetConnectivity();
+    if (isConnected) {
+      setRefreshing(true);
+      fetchData('income', setIncomeData);
+      fetchData('expenses', setExpensesData);
+      fetchData('productPerformance', setProductPerformanceData);
+      setRefreshing(false);
+    } else {
+      Alert.alert('No internet connection. Please connect to the internet to refresh data.');
+      setRefreshing(false);
     }
-  }, [loadingCount]);
+  };
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    handleRefresh()
+  }, []);
 
 
 
@@ -194,15 +203,8 @@ export default function App() {
 
   return (
     <>
-      {
-        loading ? (
-          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-            <ActivityIndicator size="large" color="#000000" />
-            <Text>Loading...</Text>
-          </View>
-        ) : (
 
-          <ScrollView style={styles.container}>
+          <ScrollView style={styles.container} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh}></RefreshControl>}>
 
             <View style={styles.topContainer}>
               <Image
@@ -244,15 +246,14 @@ export default function App() {
               </View>
             </View>
 
-            {renderLineChart(incomeData, "Income")}
-            {renderBarChart(expensesData, "Expense")}
-            {renderBarChart(productPerformanceData, "Product Performance")}
-            {renderPieChart(staffDistributionData, "Staff Distribution")}
+            {incomeData && renderLineChart(incomeData, "Income")}
+            {expensesData && renderBarChart(expensesData, "Expense")}
+            {productPerformanceData && renderBarChart(productPerformanceData, "Product Performance")}
+            {staffDistributionData && renderPieChart(staffDistributionData, "Staff Distribution")}
 
             <Text>{'\n'}</Text>
           </ScrollView>
-        )
-      }</>
+        </>
   );
 }
 
