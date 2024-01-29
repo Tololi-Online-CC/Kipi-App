@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import 'react-native-gesture-handler';
-import { Text, Image, ScrollView, StyleSheet, ActivityIndicator, View, Dimensions, Pressable, Alert } from 'react-native';
+import { Text, Image, ScrollView, StyleSheet, View, Dimensions, Pressable, Alert } from 'react-native';
 import { LineChart, BarChart, PieChart } from 'react-native-chart-kit';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
