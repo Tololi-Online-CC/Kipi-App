@@ -24,7 +24,9 @@ export default function App() {
   const [expensesData, setExpensesData] = useState<SheetData | null>(null);
   const [productPerformanceData, setProductPerformanceData] = useState<SheetData | null>(null);
   const [staffDistributionData, setStaffDistributionData] = useState<SheetData | null>(null);
-  
+  const [summary, setSummaryData] = useState<SheetData | null>(null);
+
+
 
   const fetchData = async (sheetName: string, setDataFunction: React.Dispatch<React.SetStateAction<SheetData | null>>) => {
     try {
@@ -38,7 +40,7 @@ export default function App() {
       await AsyncStorage.setItem(`${sheetName}Data`, JSON.stringify(response.data));
     } catch (error) {
       console.error(`Error fetching ${sheetName} data:`, error);
-    } 
+    }
   };
 
   const loadData = async (sheetName: string, setDataFunction: React.Dispatch<React.SetStateAction<SheetData | null>>) => {
@@ -62,6 +64,8 @@ export default function App() {
     loadData('expenses', setExpensesData);
     loadData('productPerformance', setProductPerformanceData);
     loadData('staffDistribution', setStaffDistributionData);
+    loadData('homeSummary', setSummaryData);
+
 
     const networkListener = NetInfo.addEventListener((state) => {
       if (state.isConnected) {
@@ -69,6 +73,7 @@ export default function App() {
         fetchData('expenses', setExpensesData);
         fetchData('productPerformance', setProductPerformanceData);
         fetchData('staffDistribution', setStaffDistributionData);
+        fetchData('homeSummary', setSummaryData);
       }
     });
 
@@ -82,6 +87,7 @@ export default function App() {
       fetchData('income', setIncomeData);
       fetchData('expenses', setExpensesData);
       fetchData('productPerformance', setProductPerformanceData);
+      fetchData('homeSummary', setSummaryData);
       setRefreshing(false);
     } else {
       Alert.alert('No internet connection. Please connect to the internet to refresh data.');
@@ -185,6 +191,25 @@ export default function App() {
     );
   };
 
+  const renderCard = (data: SheetData, selectedTitle: string) => {
+    // Find the index of the selected title in the first row of the data
+    const titleIndex = data.values[0].indexOf(selectedTitle);
+
+    // Check if the selected title is not found in the data
+    if (titleIndex === -1) {
+      return null;
+    }
+
+    // Get the corresponding value for the selected title from the second row
+    const selectedValue = data.values[1][titleIndex];
+
+    return (
+      <View style={styles.highlightItem}>
+        <Text style={styles.highlightTextSmall}>{selectedTitle}</Text>
+        <Text style={styles.highlightTextLarge}>{selectedValue}</Text>
+      </View>
+    );
+  };
 
   const chartConfig = {
     backgroundGradientFrom: '#ffffff',
@@ -204,56 +229,38 @@ export default function App() {
   return (
     <>
 
-          <ScrollView style={styles.container} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh}></RefreshControl>}>
+      <ScrollView style={styles.container} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh}></RefreshControl>}>
 
-            <View style={styles.topContainer}>
-              <Image
-                source={require('./../../assets/images/WallpaperCraft.webp')}
-                style={styles.backgroundImage}
-              />
-              <View style={styles.overlay} />
-              <Text style={styles.overlayText}>Didact Digital</Text>
-            </View>
+        <View style={styles.topContainer}>
+          <Image
+            source={require('./../../assets/images/WallpaperCraft.webp')}
+            style={styles.backgroundImage}
+          />
+          <View style={styles.overlay} />
+          <Text style={styles.overlayText}>Didact Digital</Text>
+        </View>
 
-            <Text style={styles.title}>Welcome Back!</Text>
+        <Text style={styles.title}>Welcome Back!</Text>
 
-            <View>
-              <View style={styles.highlightContainer}>
+        <View>
+          <View style={styles.highlightContainer}>
+            {summary && renderCard(summary, "Total Income")}
+            {summary && renderCard(summary, "Total Expenses")}
+          </View>
+          <View style={styles.highlightContainer}>
+            {summary && renderCard(summary, "Business Clients")}
+            {summary && renderCard(summary, "Users")}
+          </View>
+        </View>
 
-                <View style={styles.highlightItem}>
-                  <Text style={styles.highlightTextSmall}>Total Income</Text>
-                  <Text style={styles.highlightTextLarge}>N$2.9M</Text>
-                </View>
+        {incomeData && renderLineChart(incomeData, "Income")}
+        {expensesData && renderBarChart(expensesData, "Expense")}
+        {productPerformanceData && renderBarChart(productPerformanceData, "Product Performance")}
+        {staffDistributionData && renderPieChart(staffDistributionData, "Staff Distribution")}
 
-                <View style={styles.highlightItem}>
-                  <Text style={styles.highlightTextSmall}>Total Expenses</Text>
-                  <Text style={styles.highlightTextLarge}>N$725K</Text>
-                </View>
-
-              </View>
-              <View style={styles.highlightContainer}>
-
-                <View style={styles.highlightItem}>
-                  <Text style={styles.highlightTextSmall}>Business Clients</Text>
-                  <Text style={styles.highlightTextLarge}>34</Text>
-                </View>
-
-                <View style={styles.highlightItem}>
-                  <Text style={styles.highlightTextSmall}>Users</Text>
-                  <Text style={styles.highlightTextLarge}>874</Text>
-                </View>
-
-              </View>
-            </View>
-
-            {incomeData && renderLineChart(incomeData, "Income")}
-            {expensesData && renderBarChart(expensesData, "Expense")}
-            {productPerformanceData && renderBarChart(productPerformanceData, "Product Performance")}
-            {staffDistributionData && renderPieChart(staffDistributionData, "Staff Distribution")}
-
-            <Text>{'\n'}</Text>
-          </ScrollView>
-        </>
+        <Text>{'\n'}</Text>
+      </ScrollView>
+    </>
   );
 }
 

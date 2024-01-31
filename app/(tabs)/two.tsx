@@ -34,6 +34,10 @@ export default function App() {
   const [marketingBudget, setMarketingBudgetData] = useState<SheetData | null>(null);
   const [liabilities, setLiabilitiesData] = useState<SheetData | null>(null);
   const [assets, setAssetsData] = useState<SheetData | null>(null);
+  const [socialMedia, setSocialMediaData] = useState<SheetData | null>(null);
+  const [emailMarketing, setEmailMarketingData] = useState<SheetData | null>(null);
+  const [hrMetrics, setHrMetricsData] = useState<SheetData | null>(null);
+
 
   const [selectedComponent, setSelectedComponent] = useState("finance");
 
@@ -112,6 +116,9 @@ export default function App() {
     loadData('marketingBudget', setMarketingBudgetData);
     loadData('assets', setAssetsData);
     loadData('liabilities', setLiabilitiesData);
+    loadData('socialMedia', setSocialMediaData);
+    loadData('emailMarketing', setEmailMarketingData);
+    loadData('hrMetrics', setHrMetricsData);
 
 
     const networkListener = NetInfo.addEventListener((state) => {
@@ -125,32 +132,14 @@ export default function App() {
         fetchData('marketingBudget', setMarketingBudgetData);
         fetchData('assets', setAssetsData);
         fetchData('liabilities', setLiabilitiesData);
+        fetchData('socialMedia', setSocialMediaData);
+        fetchData('emailMarketing', setEmailMarketingData);
+        fetchData('hrMetrics', setHrMetricsData);
       }
     });
 
     return () => networkListener();
   }, []);
-
-
-  // const handleRefresh = async () => {
-  //   const isConnected = await checkInternetConnectivity();
-  //   if (isConnected) {
-  //     setRefreshing(true);
-  //     fetchData('income', setIncomeData);
-  //     fetchData('expenses', setExpensesData);
-  //     fetchData('productPerformance', setProductPerformanceData);
-  //     fetchData('taskProgress', setTaskProgressData);
-  //     fetchData('staffDistribution', setStaffDistributionData);
-  //     fetchData('webMetrics', setWebMetricsData);
-  //     fetchData('marketingBudget', setMarketingBudgetData);
-  //     fetchData('assets', setAssetsData);
-  //     fetchData('liabilities', setLiabilitiesData);
-  //     setRefreshing(false);
-  //   } else {
-  //     Alert.alert('No internet connection. Please connect to the internet to refresh data.');
-  //     setRefreshing(false);
-  //   }
-  // };
 
   // Fetch new data from the server
   const fetchDataAndUpdateStorage = async (sheetName: string, setDataFunction: React.Dispatch<React.SetStateAction<SheetData | null>>) => {
@@ -184,6 +173,9 @@ export default function App() {
       await fetchDataAndUpdateStorage('marketingBudget', setMarketingBudgetData);
       await fetchDataAndUpdateStorage('assets', setAssetsData);
       await fetchDataAndUpdateStorage('liabilities', setLiabilitiesData);
+      await fetchDataAndUpdateStorage('socialMedia', setSocialMediaData);
+      await fetchDataAndUpdateStorage('emailMarketing', setEmailMarketingData);
+      await fetchDataAndUpdateStorage('hrMetrics', setHrMetricsData);
 
       setRefreshing(false);
     } else {
@@ -651,12 +643,29 @@ export default function App() {
     );
   };
 
+  const renderCard = (data: SheetData, selectedTitle: string) => {
+    // Find the index of the selected title in the first row of the data
+    const titleIndex = data.values[0].indexOf(selectedTitle);
 
+    // Check if the selected title is not found in the data
+    if (titleIndex === -1) {
+      return null;
+    }
+
+    // Get the corresponding value for the selected title from the second row
+    const selectedValue = data.values[1][titleIndex];
+
+    return (
+      <View style={styles.highlightItem}>
+        <Text style={styles.highlightTextSmall}>{selectedTitle}</Text>
+        <Text style={styles.highlightTextLarge}>{selectedValue}</Text>
+      </View>
+    );
+  };
 
 
   return (
     <>
-
       <ScrollView
         horizontal
         contentContainerStyle={styles.buttonContainer}
@@ -677,8 +686,6 @@ export default function App() {
           <Text style={styles.buttonText}>Operations</Text>
         </TouchableOpacity>
 
-
-
       </ScrollView>
       <ScrollView style={styles.container} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh}></RefreshControl>}>
 
@@ -695,63 +702,30 @@ export default function App() {
           ) : selectedComponent === "marketing" ? (
             <>
               <Text style={styles.titleSmall}>Social Media Performance</Text>
+
               <View style={styles.highlightContainer}>
-
-                <View style={styles.highlightItem}>
-                  <Text style={styles.highlightTextSmall}>Impressions</Text>
-                  <Text style={styles.highlightTextLarge}>2731</Text>
-                </View>
-
-                <View style={styles.highlightItem}>
-                  <Text style={styles.highlightTextSmall}>Engagement</Text>
-                  <Text style={styles.highlightTextLarge}>1320</Text>
-                </View>
-
-                <View style={styles.highlightItem}>
-                  <Text style={styles.highlightTextSmall}>Reach</Text>
-                  <Text style={styles.highlightTextLarge}>3920</Text>
-                </View>
-
+                {socialMedia && renderCard(socialMedia, "Impressions")}
+                {socialMedia && renderCard(socialMedia, "Engagement")}
+                {socialMedia && renderCard(socialMedia, "Reach")}
               </View>
+
               <View style={styles.highlightContainer}>
-
-                <View style={styles.highlightItem}>
-                  <Text style={styles.highlightTextSmall}>Followers</Text>
-                  <Text style={styles.highlightTextLarge}>30</Text>
-                </View>
-
-                <View style={styles.highlightItem}>
-                  <Text style={styles.highlightTextSmall}>Posts</Text>
-                  <Text style={styles.highlightTextLarge}>7</Text>
-                </View>
-
-                <View style={styles.highlightItem}>
-                  <Text style={styles.highlightTextSmall}>Likes</Text>
-                  <Text style={styles.highlightTextLarge}>500</Text>
-                </View>
-
+                {socialMedia && renderCard(socialMedia, "Followers")}
+                {socialMedia && renderCard(socialMedia, "Posts")}
+                {socialMedia && renderCard(socialMedia, "Likes")}
               </View>
+
               {productPerformanceData && renderBarChart(productPerformanceData, 'Product Performance')}
               {webMetrics && renderLineChart(webMetrics, 'Website Performance')}
+
               <Text style={styles.titleSmall}>Email Performance</Text>
+
               <View style={styles.highlightContainer}>
-
-                <View style={styles.highlightItem}>
-                  <Text style={styles.highlightTextSmall}>Subscribers</Text>
-                  <Text style={styles.highlightTextLarge}>2731</Text>
-                </View>
-
-                <View style={styles.highlightItem}>
-                  <Text style={styles.highlightTextSmall}>Open Rate</Text>
-                  <Text style={styles.highlightTextLarge}>69%</Text>
-                </View>
-
-                <View style={styles.highlightItem}>
-                  <Text style={styles.highlightTextSmall}>Conversion</Text>
-                  <Text style={styles.highlightTextLarge}>24.1%</Text>
-                </View>
-
+                {emailMarketing && renderCard(emailMarketing, "Subscribers")}
+                {emailMarketing && renderCard(emailMarketing, "Open Rate")}
+                {emailMarketing && renderCard(emailMarketing, "Conversion")}
               </View>
+
               {marketingBudget && renderBarChart(marketingBudget, 'Marketing Budget')}
               {productPerformanceData && renderBarChart(productPerformanceData, 'Email Marketing KPIs')}
 
@@ -765,9 +739,10 @@ export default function App() {
           ) : selectedComponent === "hr" ? (
             <>
               <Text style={styles.titleSmall}>HR Performance</Text>
+
               <View style={styles.highlightContainer}>
 
-                <View style={styles.highlightItem}>
+                {/* <View style={styles.highlightItem}>
                   <Text style={styles.highlightTextSmall}>Satisfaction </Text>
                   <Text style={styles.highlightTextLarge}>87%</Text>
                 </View>
@@ -775,12 +750,15 @@ export default function App() {
                 <View style={styles.highlightItem}>
                   <Text style={styles.highlightTextSmall}>Retention</Text>
                   <Text style={styles.highlightTextLarge}>100%</Text>
-                </View>
+                </View> */}
+
+                {hrMetrics && renderCard(hrMetrics, "Satisfaction")}
+                {hrMetrics && renderCard(hrMetrics, "Retention")}
 
               </View>
               <View style={styles.highlightContainer}>
 
-                <View style={styles.highlightItem}>
+                {/* <View style={styles.highlightItem}>
                   <Text style={styles.highlightTextSmall}>Turnover </Text>
                   <Text style={styles.highlightTextLarge}>0%</Text>
                 </View>
@@ -788,7 +766,11 @@ export default function App() {
                 <View style={styles.highlightItem}>
                   <Text style={styles.highlightTextSmall}>Productivity</Text>
                   <Text style={styles.highlightTextLarge}>93.3%</Text>
-                </View>
+                </View> */}
+
+                {hrMetrics && renderCard(hrMetrics, "Turnover")}
+                {hrMetrics && renderCard(hrMetrics, "Productivity")}
+
 
               </View>
               {staffDistributionData && renderPieChart(staffDistributionData, 'Staff Distribution')}
@@ -807,7 +789,6 @@ export default function App() {
 
         <Text>{'\n'}</Text>
         <View style={{ display: "flex", flexDirection: "row", justifyContent: "center", marginHorizontal: 30 }}>
-          {/* <Button title='Refresh' onPress={handleRefresh}></Button> */}
           <Button title='Export Reports' onPress={handleOpenPress}></Button>
         </View>
         <Text>{'\n'}</Text>
