@@ -1,12 +1,18 @@
 import React from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
+import { Link, router } from 'expo-router';
 
 const UserProfile = () => {
+
+  const handleLogout = () => {
+    router.replace("/")
+  }
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <Image
-          source={require('./../../assets/images/didact-logo.png')}
+          source={require('./../../assets/images/icon.png')}
           style={styles.profileImage}
           resizeMode="contain"
         />
@@ -15,20 +21,20 @@ const UserProfile = () => {
       </View>
 
       <View style={styles.cardContainer}>
-        {/* Notification Card */}
-        <TouchableOpacity style={styles.card}>
-          <Text style={styles.cardTitle}>Notifications</Text>
-          {/* You can add icons, badges, or other relevant content here */}
-        </TouchableOpacity>
 
-        {/* Settings Card */}
-        <TouchableOpacity style={styles.card}>
-          <Text style={styles.cardTitle}>Settings</Text>
-          {/* You can add icons, switches, or other relevant content here */}
-        </TouchableOpacity>
+        <Link href={{ pathname: "/Notifications" }} asChild>
+          <TouchableOpacity style={styles.card}>
+            <Text style={styles.cardTitle}>Updates & Support</Text>
+          </TouchableOpacity>
+        </Link>
 
-        {/* Logout Card */}
-        <TouchableOpacity style={[styles.card, styles.logoutCard]}>
+        <Link href={{ pathname: "/Settings" }} asChild>
+          <TouchableOpacity style={styles.card}>
+            <Text style={styles.cardTitle}>Settings</Text>
+          </TouchableOpacity>
+        </Link>
+
+        <TouchableOpacity style={[styles.card, styles.logoutCard]} onPress={handleLogout}>
           <Text style={[styles.cardTitle, styles.logoutText]}>Logout</Text>
         </TouchableOpacity>
       </View>
@@ -51,6 +57,8 @@ const styles = StyleSheet.create({
     height: 120,
     borderRadius: 60,
     marginBottom: 10,
+    borderWidth: 1,
+    borderColor: "#c1d1d1",
   },
   userName: {
     fontSize: 20,
