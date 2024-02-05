@@ -499,25 +499,22 @@ export default function App() {
     exportComprehensiveFinancialStatement(incomeData, expensesData, assets, liabilities, 'comprehensive_financial_statement');
   }, [incomeData, expensesData, assets, liabilities]);
 
-  const handleExportFinancialStatement = useCallback(() => {
-    exportPDF(incomeData, 'financial_statement');
-  }, []);
 
   const handleExportBalanceStatement = useCallback(() => {
     exportPDF(assets, 'balance_statement');
-  }, []);
+  }, [assets]);
 
   const handleExportLiabilityStatement = useCallback(() => {
     exportPDF(liabilities, 'liability_statement');
-  }, []);
+  }, [liabilities]);
 
   const handleExportIncomeStatement = useCallback(() => {
     exportPDF(incomeData, 'income_statement');
-  }, []);
+  }, [incomeData]);
 
   const handleExportProductPerformance = useCallback(() => {
     exportPDF(productPerformanceData, 'product_performance');
-  }, []);
+  }, [productPerformanceData]);
 
 
 
@@ -821,19 +818,19 @@ export default function App() {
                 <Text style={{ color: "white", fontSize: 18, fontWeight: "500" }}>Export</Text>
               </TouchableOpacity>
             ) : value === 'balance' ? (
-              <TouchableOpacity style={styles.exportButton} >
+              <TouchableOpacity style={styles.exportButton} onPress={handleExportBalanceStatement}>
                 <Text style={{ color: "white", fontSize: 18, fontWeight: "500" }}>Export</Text>
               </TouchableOpacity>
             ) : value === 'income' ? (
-              <TouchableOpacity style={styles.exportButton}>
+              <TouchableOpacity style={styles.exportButton} onPress={handleExportIncomeStatement}>
                 <Text style={{ color: "white", fontSize: 18, fontWeight: "500" }}>Export</Text>
               </TouchableOpacity>
             ) : value === 'liabilities' ? (
-              <TouchableOpacity style={styles.exportButton}>
+              <TouchableOpacity style={styles.exportButton} onPress={handleExportLiabilityStatement}>
                 <Text style={{ color: "white", fontSize: 18, fontWeight: "500" }}>Export</Text>
               </TouchableOpacity>
             ) : value === 'prodPerformance' ? (
-              <TouchableOpacity style={styles.exportButton}>
+              <TouchableOpacity style={styles.exportButton} onPress={handleExportProductPerformance}>
                 <Text style={{ color: "white", fontSize: 18, fontWeight: "500" }}>Export</Text>
               </TouchableOpacity>
             ) : (
