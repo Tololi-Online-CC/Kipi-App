@@ -36,6 +36,7 @@ export default function App() {
   const [socialMedia, setSocialMediaData] = useState<SheetData | null>(null);
   const [emailMarketing, setEmailMarketingData] = useState<SheetData | null>(null);
   const [hrMetrics, setHrMetricsData] = useState<SheetData | null>(null);
+  const [opsMetrics, setOpsMetricsData] = useState<SheetData | null>(null);
 
 
   const [selectedComponent, setSelectedComponent] = useState("finance");
@@ -118,6 +119,7 @@ export default function App() {
     loadData('socialMedia', setSocialMediaData);
     loadData('emailMarketing', setEmailMarketingData);
     loadData('hrMetrics', setHrMetricsData);
+    loadData('operationMetrics', setOpsMetricsData);
 
 
     const networkListener = NetInfo.addEventListener((state) => {
@@ -134,6 +136,7 @@ export default function App() {
         fetchData('socialMedia', setSocialMediaData);
         fetchData('emailMarketing', setEmailMarketingData);
         fetchData('hrMetrics', setHrMetricsData);
+        fetchData('operationMetrics', setOpsMetricsData);
       }
     });
 
@@ -163,20 +166,25 @@ export default function App() {
       setRefreshing(true);
 
       // Call fetchDataAndUpdateStorage for each sheet you want to refresh
-      await fetchDataAndUpdateStorage('income', setIncomeData);
-      await fetchDataAndUpdateStorage('expenses', setExpensesData);
-      await fetchDataAndUpdateStorage('productPerformance', setProductPerformanceData);
-      await fetchDataAndUpdateStorage('taskProgress', setTaskProgressData);
-      await fetchDataAndUpdateStorage('staffDistribution', setStaffDistributionData);
-      await fetchDataAndUpdateStorage('webMetrics', setWebMetricsData);
-      await fetchDataAndUpdateStorage('marketingBudget', setMarketingBudgetData);
-      await fetchDataAndUpdateStorage('assets', setAssetsData);
-      await fetchDataAndUpdateStorage('liabilities', setLiabilitiesData);
-      await fetchDataAndUpdateStorage('socialMedia', setSocialMediaData);
-      await fetchDataAndUpdateStorage('emailMarketing', setEmailMarketingData);
-      await fetchDataAndUpdateStorage('hrMetrics', setHrMetricsData);
+      try {
+        await fetchDataAndUpdateStorage('income', setIncomeData);
+        await fetchDataAndUpdateStorage('expenses', setExpensesData);
+        await fetchDataAndUpdateStorage('productPerformance', setProductPerformanceData);
+        await fetchDataAndUpdateStorage('taskProgress', setTaskProgressData);
+        await fetchDataAndUpdateStorage('staffDistribution', setStaffDistributionData);
+        await fetchDataAndUpdateStorage('webMetrics', setWebMetricsData);
+        await fetchDataAndUpdateStorage('marketingBudget', setMarketingBudgetData);
+        await fetchDataAndUpdateStorage('assets', setAssetsData);
+        await fetchDataAndUpdateStorage('liabilities', setLiabilitiesData);
+        await fetchDataAndUpdateStorage('socialMedia', setSocialMediaData);
+        await fetchDataAndUpdateStorage('emailMarketing', setEmailMarketingData);
+        await fetchDataAndUpdateStorage('hrMetrics', setHrMetricsData);
+        await fetchDataAndUpdateStorage('operationMetrics', setOpsMetricsData);
+      }
+      finally {
+        setRefreshing(false);
+      }
 
-      setRefreshing(false);
     } else {
       Alert.alert('No internet connection. Please connect to the internet to refresh data.');
       setRefreshing(false);
@@ -723,14 +731,48 @@ export default function App() {
               </View>
 
               {marketingBudget && renderBarChart(marketingBudget, 'Marketing Budget')}
-              {productPerformanceData && renderBarChart(productPerformanceData, 'Email Marketing KPIs')}
+              {/* {productPerformanceData && renderBarChart(productPerformanceData, 'Email Marketing KPIs')} */}
 
             </>
           ) : selectedComponent === "operations" ? (
             <>
-              {incomeData && renderLineChart(incomeData, 'Operation Performance')}
-              {expensesData && renderLineChart(expensesData, 'Operation Tasks')}
-              {productPerformanceData && renderBarChart(productPerformanceData, 'Operation Budget')}
+              <Text style={styles.titleSmall}>Tololi Online</Text>
+
+              <View style={styles.highlightContainer}>
+                {opsMetrics && renderCard(opsMetrics, "Tololi Income")}
+                {opsMetrics && renderCard(opsMetrics, "Tololi Farmers")}
+              </View>
+              <View style={styles.highlightContainer}>
+                {opsMetrics && renderCard(opsMetrics, "Tololi Bugs Reported")}
+                {opsMetrics && renderCard(opsMetrics, "T. Business Clients")}
+              </View>
+
+              <Text style={styles.titleSmall}>Meet Kipi</Text>
+
+              <View style={styles.highlightContainer}>
+                {opsMetrics && renderCard(opsMetrics, "Kipi Income")}
+                {opsMetrics && renderCard(opsMetrics, "Kipi Clients")}
+              </View>
+              <View style={styles.highlightContainer}>
+                {opsMetrics && renderCard(opsMetrics, "Kipi App Crashes")}
+                {opsMetrics && renderCard(opsMetrics, "Kipi Bugs Reported")}
+              </View>
+
+              <Text style={styles.titleSmall}>E-Tendering System</Text>
+
+              <View style={styles.highlightContainer}>
+                {opsMetrics && renderCard(opsMetrics, "ETS Income")}
+                {opsMetrics && renderCard(opsMetrics, "ETS Clients")}
+                {opsMetrics && renderCard(opsMetrics, "ETS Bugs")}
+              </View>
+
+              <Text style={styles.titleSmall}>Digital Menu</Text>
+
+              <View style={styles.highlightContainer}>
+                {opsMetrics && renderCard(opsMetrics, "Menu Income")}
+                {opsMetrics && renderCard(opsMetrics, "Menu Clients")}
+                {opsMetrics && renderCard(opsMetrics, "Menu Bugs")}
+              </View>
             </>
           ) : selectedComponent === "hr" ? (
             <>
@@ -738,31 +780,11 @@ export default function App() {
 
               <View style={styles.highlightContainer}>
 
-                {/* <View style={styles.highlightItem}>
-                  <Text style={styles.highlightTextSmall}>Satisfaction </Text>
-                  <Text style={styles.highlightTextLarge}>87%</Text>
-                </View>
-
-                <View style={styles.highlightItem}>
-                  <Text style={styles.highlightTextSmall}>Retention</Text>
-                  <Text style={styles.highlightTextLarge}>100%</Text>
-                </View> */}
-
                 {hrMetrics && renderCard(hrMetrics, "Satisfaction")}
                 {hrMetrics && renderCard(hrMetrics, "Retention")}
 
               </View>
               <View style={styles.highlightContainer}>
-
-                {/* <View style={styles.highlightItem}>
-                  <Text style={styles.highlightTextSmall}>Turnover </Text>
-                  <Text style={styles.highlightTextLarge}>0%</Text>
-                </View>
-
-                <View style={styles.highlightItem}>
-                  <Text style={styles.highlightTextSmall}>Productivity</Text>
-                  <Text style={styles.highlightTextLarge}>93.3%</Text>
-                </View> */}
 
                 {hrMetrics && renderCard(hrMetrics, "Turnover")}
                 {hrMetrics && renderCard(hrMetrics, "Productivity")}
@@ -772,7 +794,6 @@ export default function App() {
               {staffDistributionData && renderPieChart(staffDistributionData, 'Staff Distribution')}
               {taskProgressData && renderTable(taskProgressData, 'Task Progress')}
 
-              {/* {renderBarChart(productPerformanceData, 'Product Performance')} */}
             </>
           ) : (
             <>

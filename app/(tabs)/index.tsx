@@ -83,11 +83,15 @@ export default function App() {
     const isConnected = await checkInternetConnectivity();
     if (isConnected) {
       setRefreshing(true);
-      fetchData('income', setIncomeData);
-      fetchData('expenses', setExpensesData);
-      fetchData('productPerformance', setProductPerformanceData);
-      fetchData('homeSummary', setSummaryData);
-      setRefreshing(false);
+      try {
+        fetchData('income', setIncomeData);
+        fetchData('expenses', setExpensesData);
+        fetchData('productPerformance', setProductPerformanceData);
+        fetchData('homeSummary', setSummaryData);
+      }
+      finally {
+        setRefreshing(false);
+      }
     } else {
       Alert.alert('No internet connection. Please connect to the internet to refresh data.');
       setRefreshing(false);
