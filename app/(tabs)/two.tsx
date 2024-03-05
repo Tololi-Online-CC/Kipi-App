@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import 'react-native-gesture-handler';
-import { RefreshControl } from 'react-native-gesture-handler';
-import { View, Text, Dimensions, ScrollView, Button, Alert, TouchableOpacity, StyleSheet, Pressable } from 'react-native';
+import { View, Text, Dimensions, ScrollView, Button, Alert, TouchableOpacity, StyleSheet, Pressable, RefreshControl } from 'react-native';
 import { LineChart, BarChart, PieChart } from 'react-native-chart-kit';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';

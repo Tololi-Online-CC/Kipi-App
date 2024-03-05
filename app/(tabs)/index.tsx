@@ -1,12 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import 'react-native-gesture-handler';
-import { Text, Image, ScrollView, StyleSheet, View, Dimensions, Pressable, Alert } from 'react-native';
+import { Text, Image, ScrollView, StyleSheet, View, Dimensions, Pressable, Alert, RefreshControl } from 'react-native';
 import { LineChart, BarChart, PieChart } from 'react-native-chart-kit';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
 import { Link } from 'expo-router';
-import { RefreshControl } from 'react-native-gesture-handler';
 
 interface SheetData {
   range: string;
@@ -101,6 +100,17 @@ export default function App() {
   }, []);
 
 
+  const chartConfig = {
+    backgroundGradientFrom: '#ffffff',
+    backgroundGradientFromOpacity: 0,
+    backgroundGradientTo: '#ffffff',
+    backgroundGradientToOpacity: 0,
+    color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+    strokeWidth: 3, // optional, default 3
+    barPercentage: 0.5,
+    useShadowColorFromDataset: false, // optional
+    decimalPlaces: 0,
+  };
 
   const renderLineChart = (data: SheetData | null, title: string) => {
     return (
@@ -211,20 +221,6 @@ export default function App() {
     );
   };
 
-  const chartConfig = {
-    backgroundGradientFrom: '#ffffff',
-    backgroundGradientFromOpacity: 0,
-    backgroundGradientTo: '#ffffff',
-    backgroundGradientToOpacity: 0,
-    color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-    strokeWidth: 3, // optional, default 3
-    barPercentage: 0.5,
-    useShadowColorFromDataset: false, // optional
-    decimalPlaces: 0,
-  };
-
-
-
 
   return (
     <>
@@ -328,10 +324,5 @@ const styles = StyleSheet.create({
   },
   highlightTextLarge: {
     fontSize: 18,
-  },
-  link: {
-    color: 'black',
-    textAlign: 'center',
-    padding: 10,
   },
 });
