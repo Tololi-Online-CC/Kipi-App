@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Meet-Kipi",
+    "name": "Meet Kipi",
     "slug": "Meet-Kipi",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -13,16 +13,18 @@
       "backgroundColor": "#ffffff"
     },
     "assetBundlePatterns": [
-      "**/*"
+      "/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.edilsonz.MeetKipi"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.edilsonz.MeetKipi"
     },
     "web": {
       "bundler": "metro",
@@ -34,6 +36,14 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "ccedb198-4ccb-4e1e-af28-0e3ba0ab98b4"
+      }
     }
   }
 }
